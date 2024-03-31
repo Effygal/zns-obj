@@ -47,5 +47,23 @@ class Logger {
 			pthread_mutex_t _mutex;
             int16_t _logger_id;
             std::vector<std::pair<std::string, int>> _gws; // gateway servers, <ip, port>
+            int _wport;
+            int _rport;
 
 };
+
+int main() {
+    Logger logger;
+    //TODO: dispatch below on a separate threads
+    rpc::server asrv(_wport);
+    asrv.bind("Append", [&](const LogEnt& logent) {
+        return logger.Append(logent);
+    });
+    asrv.run();
+
+    rpc::server rsrv(_rport);
+    rsrv.bind("Read", [&](key_t key, void* buff) {
+        return logger.Read(key, buff);
+    });
+    return 0;
+}
