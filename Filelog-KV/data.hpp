@@ -69,7 +69,7 @@ enum RequestType
 {
 	GET = 1,
 	PUT = 2,
-	DELETE = 3,
+	DEL = 3,
 };
 
 struct KVRequest 

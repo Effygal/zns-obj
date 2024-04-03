@@ -130,8 +130,16 @@ int main() {
         rsrv.run();
     });
 
+    std::thread del_thread([]() {
+        rpc::server rsrv(7777);
+        rsrv.bind("HandleDel", [](std::string buffer) {
+		ProcessKVRequest(buffer);
+	});
+        rsrv.run();
+    });
+
     std::thread catchup_thread([]() {
-        rpc::server csrv(7777);
+        rpc::server csrv(8888);
         csrv.bind("CatchupMeeple", []() {
         });
         csrv.run();
