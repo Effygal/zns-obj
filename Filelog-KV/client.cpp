@@ -1,7 +1,6 @@
-#include <iostream>
-#include "rpc/client.h"
-#include "data.hpp"
+#include "gateway.hpp"
 
+// Serializing the request in order to send it over the network
 void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSize)
 {
     // Check if the buffer is large enough to hold the serialized data
