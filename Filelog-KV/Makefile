@@ -1,7 +1,7 @@
 # Compiler and flags
 CC := gcc
 CXX := g++
-CFLAGS := -Wall -std=c++11
+CFLAGS := -Wall -std=c++14 -lrpc
 LFLAGS := -pthread
 
 # Directories

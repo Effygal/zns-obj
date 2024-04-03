@@ -82,7 +82,7 @@ struct KVRequest
 struct ReplicationRequest 
 {
 	key_t key;
-	LBAs LBAs;
+	LBAs lbas;
 };
 
 struct ReplicationResp 

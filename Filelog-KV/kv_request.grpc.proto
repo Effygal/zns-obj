@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message KVRequest {
+    enum RequestType {
+        GET = 0;
+        PUT = 1;
+        DELETE = 2;
+    }
+
+    RequestType request_type = 1;
+    int32 key = 2;
+    string value = 3;
+}
+
