@@ -69,7 +69,7 @@ enum RequestType
 {
 	GET = 1,
 	PUT = 2,
-	DELETE = 3,
+	DEL = 3,
 };
 
 struct KVRequest 
@@ -82,7 +82,7 @@ struct KVRequest
 struct ReplicationRequest 
 {
 	key_t key;
-	LBAs LBAs;
+	LBAs lbas;
 };
 
 struct ReplicationResp 
@@ -140,7 +140,7 @@ struct LogEnt {
 		return metadata.length;
 	}
 	void set_value(std::string value) {
-		strcpy(data, value.c_str());
+		std::strcpy(data, value.c_str());
 	}
 	char* get_value() {
 		return data;
