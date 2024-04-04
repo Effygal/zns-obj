@@ -33,4 +33,12 @@ private:
     void BroadcastLBA(key_t key, off_t lba);
 };
 
+// Function to convert std::string to byte buffer
+void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize);
+
+// Function to deserialize byte buffer into cmd struct
+void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request);
+
+void ProcessAppend(const std::string& serializedData);
+
 #endif // LOGGER_HPP

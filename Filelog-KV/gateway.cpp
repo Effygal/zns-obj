@@ -1,6 +1,32 @@
 #include "gateway.hpp"
 
 
+// Function to serialize cmd struct into a byte buffer
+void SerializeCMDRequest(const cmd& request, char* buffer, size_t bufferSize) {
+    // Check if the buffer is large enough to hold the serialized data
+    if (bufferSize < sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE) {
+        // Handle error (e.g., throw an exception or return an error code)
+        return;
+    }
+
+    // Serialize op
+    memcpy(buffer, &request.op, sizeof(CmdType));
+    buffer += sizeof(CmdType);
+
+    // Serialize key
+    memcpy(buffer, &request.key, sizeof(key_t));
+    buffer += sizeof(key_t);
+
+    // Serialize value
+    memcpy(buffer, request.value, BLOCK_SIZE);
+}
+
+// Function to convert byte buffer to std::string
+std::string bufferToString(const char* buffer, size_t bufferSize)
+{
+    return std::string(buffer, buffer + bufferSize);
+}
+
 // Function to convert std::string to byte buffer
 void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize)
 {
@@ -12,7 +38,7 @@ void stringToBuffer(const std::string& serializedData, char* buffer, size_t buff
 }
 
 // Function to deserialize byte buffer into KVRequest struct
-void deserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request)
+void DeserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request)
 {
     // Check if the buffer is large enough to hold the serialized data
     if (bufferSize < sizeof(RequestType) + sizeof(int32_t) + BLOCK_SIZE) {
@@ -32,6 +58,21 @@ void deserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& requ
     memcpy(request.value, buffer, BLOCK_SIZE);
 }
 
+void TranslateKVReq(KVRequest request, cmd& cmnd) {
+    if (request.request_type == 1) {
+        cmnd.op = READ;
+        cmnd.key = request.key;
+    }
+    else if (request.request_type == 2) {
+        cmnd.op = APPEND;
+        cmnd.key = request.key;
+        std::memcpy(cmnd.value, request.value, BLOCK_SIZE);
+    }
+    else if (request.request_type == 3) {
+        // Fill in late if necessary
+    }
+}
+
 void ProcessGetRequest(const std::string& serializedData)
 {
     // Convert the received std::string to a byte buffer
@@ -41,7 +82,7 @@ void ProcessGetRequest(const std::string& serializedData)
 
     // Deserialize the byte buffer into a KVRequest struct
     KVRequest request;
-    deserializeKVRequest(buffer, bufferSize, request);
+    DeserializeKVRequest(buffer, bufferSize, request);
 
     // Process GET request here
 
@@ -56,10 +97,18 @@ void ProcessPutRequest(const std::string& serializedData)
 
     // Deserialize the byte buffer into a KVRequest struct
     KVRequest request;
-    deserializeKVRequest(buffer, bufferSize, request);
+    DeserializeKVRequest(buffer, bufferSize, request);
 
     // Process PUT request here
-    
+    cmd translated_cmd;
+    TranslateKVReq(request, translated_cmd);
+    // Serialize the request
+    constexpr size_t cmdbufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
+    char cmdbuffer[cmdbufferSize];
+    SerializeCMDRequest(translated_cmd, cmdbuffer, cmdbufferSize);
+    std::string serializedCMD = bufferToString(cmdbuffer, cmdbufferSize);
+    rpc::client logger("127.0.0.1", 1111);	    
+    logger.call("Append", serializedCMD);
 }
 
 void ProcessDelRequest(const std::string& serializedData)
@@ -71,7 +120,7 @@ void ProcessDelRequest(const std::string& serializedData)
 
     // Deserialize the byte buffer into a KVRequest struct
     KVRequest request;
-    deserializeKVRequest(buffer, bufferSize, request);
+    DeserializeKVRequest(buffer, bufferSize, request);
 
     // Process DELETE request here
 

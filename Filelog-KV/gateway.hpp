@@ -38,15 +38,24 @@ public:
 
 };
 
+
+// Function to serialize cmd struct into a byte buffer
+void SerializeCMDRequest(const cmd& request, char* buffer, size_t bufferSize);
+
 // Function to convert std::string to byte buffer
 void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize);
+// Function to convert byte buffer to std::string
+std::string bufferToString(const char* buffer, size_t bufferSize);
 
 // Function to deserialize byte buffer into KVRequest struct
-void deserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request);
+void DeserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request);
 
 // Process different types of requests
 void ProcessGetRequest(const std::string& serializedData);
 void ProcessPutRequest(const std::string& serializedData);
 void ProcessDelRequest(const std::string& serializedData);
+
+// Translate KV request to cmd
+void TranslateKVReq(KVRequest request);
 
 #endif // GATEWAY_H
