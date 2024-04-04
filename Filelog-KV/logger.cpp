@@ -48,20 +48,42 @@ void ProcessAppend(const std::string& serializedData) {
     std::cout << cmnd.op << std::endl;
 }
 
+void ProcessRead(const std::string& serializedData) {
+    // Convert the received std::string to a byte buffer
+    constexpr size_t bufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
+    char buffer[bufferSize];
+    stringToBuffer(serializedData, buffer, bufferSize);
+
+    cmd cmnd;
+    DeserializeCMDRequest(buffer, bufferSize, cmnd);
+    std::cout << cmnd.op << std::endl;
+}
+
+
 int main() {
     Logger logger;
 
     // TODO: dispatch below on a separate threads
-    rpc::server asrv(1111);
-    asrv.bind("Append", [](std::string buffer) {
-        ProcessAppend(buffer);
+   
+    std::thread append_thread([]() { 
+        rpc::server asrv(1111);
+        asrv.bind("Append", [](std::string buffer) {
+            ProcessAppend(buffer);
+        });
+        asrv.run();
     });
-    asrv.run();
 
-    rpc::server rsrv(2222);
-    rsrv.bind("Read", []() {
-
+     std::thread read_thread([]() {
+        rpc::server rsrv(2222);
+        rsrv.bind("Read", [](std::string buffer) {
+            ProcessRead(buffer);
+        });
+        rsrv.run();
     });
+
+
+    append_thread.join();
+    read_thread.join();
 
     return 0;
 }

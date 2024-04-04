@@ -66,7 +66,6 @@ void TranslateKVReq(KVRequest request, cmd& cmnd) {
     else if (request.request_type == 2) {
         cmnd.op = APPEND;
         cmnd.key = request.key;
-        std::memcpy(cmnd.value, request.value, BLOCK_SIZE);
     }
     else if (request.request_type == 3) {
         // Fill in late if necessary
@@ -85,7 +84,15 @@ void ProcessGetRequest(const std::string& serializedData)
     DeserializeKVRequest(buffer, bufferSize, request);
 
     // Process GET request here
-
+    cmd translated_cmd;
+    TranslateKVReq(request, translated_cmd);
+    // Serialize the request
+    constexpr size_t cmdbufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
+    char cmdbuffer[cmdbufferSize];
+    SerializeCMDRequest(translated_cmd, cmdbuffer, cmdbufferSize);
+    std::string serializedCMD = bufferToString(cmdbuffer, cmdbufferSize);
+    rpc::client logger("127.0.0.1", 2222);	    
+    logger.call("Read", serializedCMD);
 }
 
 void ProcessPutRequest(const std::string& serializedData)
