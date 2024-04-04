@@ -60,8 +60,7 @@ class Gateway{
         std::vector<logger> known_loggers;
         std::vector<gw> known_peers;
     private:
-        std::map<key_t,LBAs> K_LBAs;
-        
+        std::map<key_t,LBAs> K_LBAs;        
 };
 
 int main() {

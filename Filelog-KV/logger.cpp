@@ -4,7 +4,7 @@
 #include <thread>
 #include "data.hpp"
 #include "rpc/server.h"
-#include "rpc/client.h"
+
 
 class Logger {
 
