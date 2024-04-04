@@ -23,6 +23,9 @@ struct gw {
 };
 
 class Gateway {
+private:
+    std::map<key_t, LBAs> K_LBAs;
+    
 public:
     Gateway();
     ~Gateway();
@@ -34,8 +37,6 @@ public:
     std::vector<logger> known_loggers;
     std::vector<gw> known_peers;
 
-private:
-    std::map<key_t, LBAs> K_LBAs;
 };
 
 // Function to convert std::string to byte buffer

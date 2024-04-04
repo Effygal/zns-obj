@@ -140,7 +140,7 @@ struct LogEnt {
 		return metadata.length;
 	}
 	void set_value(std::string value) {
-		strcpy(data, value.c_str());
+		std::strcpy(data, value.c_str());
 	}
 	char* get_value() {
 		return data;

@@ -44,8 +44,7 @@ void ProcessGetRequest(const std::string& serializedData)
     KVRequest request;
     deserializeKVRequest(buffer, bufferSize, request);
 
-    // Now 'request' contains the deserialized data and can be processed accordingly
-    std::cout << "Command: " << request.request_type << std::endl;
+    // Process GET request here
 }
 
 void ProcessPutRequest(const std::string& serializedData)
@@ -59,8 +58,7 @@ void ProcessPutRequest(const std::string& serializedData)
     KVRequest request;
     deserializeKVRequest(buffer, bufferSize, request);
 
-    // Now 'request' contains the deserialized data and can be processed accordingly
-    std::cout << "Command: " << request.request_type << std::endl;
+    // Process PUT request here
 }
 
 void ProcessDelRequest(const std::string& serializedData)
@@ -74,8 +72,7 @@ void ProcessDelRequest(const std::string& serializedData)
     KVRequest request;
     deserializeKVRequest(buffer, bufferSize, request);
 
-    // Now 'request' contains the deserialized data and can be processed accordingly
-    std::cout << "Command: " << request.request_type << std::endl;
+    // Process DELETE request here
 }
 
 
@@ -113,22 +110,11 @@ int main() {
         csrv.run();
     });
 
-    constexpr int num_write_threads = 4; // Adjust this as needed
-    std::vector<std::thread> write_thread_pool;
-    /*for (int i = 0; i < num_write_threads; ++i) {
-        write_thread_pool.emplace_back([]() {
-            rpc::server wsrv(6666);
-            wsrv.bind("HandleWrite", [](int a, int b) {
-                return a + b;
-            });
-            wsrv.run();
-        });
-    }*/
 
     read_thread.join();
-    for (auto& thread : write_thread_pool) {
-        thread.join();
-    }
+    write_thread.join();
+    del_thread.join();
+    catchup_thread.join();
 
     return 0;
 }
