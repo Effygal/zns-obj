@@ -1,19 +1,27 @@
 #include "logger.hpp"
 
+Logger::Logger() {
+    // Constructor implementation goes here
+}
+
+Logger::~Logger() {
+    // Destructor implementation goes here
+}
 
 int main() {
-    // Logger logger;
+    Logger logger;
 
-    //TODO: dispatch below on a separate threads
-    // rpc::server asrv(_wport);
-    // asrv.bind("Append", [&](const LogEnt& logent) {
-    //     return logger.Append(logent);
-    // });
-    // asrv.run();
+    // TODO: dispatch below on a separate threads
+    rpc::server asrv(1111);
+    asrv.bind("Append", []() {
 
-    // rpc::server rsrv(_rport);
-    // rsrv.bind("Read", [&](key_t key, void* buff) {
-    //     return logger.Read(key, buff);
-    // });
+    });
+    asrv.run();
+
+    rpc::server rsrv(2222);
+    rsrv.bind("Read", []() {
+
+    });
+
     return 0;
 }

@@ -12,7 +12,6 @@
 #include "rpc/client.h"
 
 
-
 class Logger {
 public:
     Logger();

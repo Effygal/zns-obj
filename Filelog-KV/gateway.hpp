@@ -25,7 +25,6 @@ struct gw {
 class Gateway {
 private:
     std::map<key_t, LBAs> K_LBAs;
-    
 public:
     Gateway();
     ~Gateway();

@@ -1,4 +1,4 @@
-#include "gateway.hpp"
+#include "client.hpp"
 
 // Serializing the request in order to send it over the network
 void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSize)
@@ -126,6 +126,9 @@ bool parseCommand(const std::string& command, KVRequest& request)
                 std::cerr << "Command should have two arguments (the key and the value)\n";
                 return false;
             }
+            const std::string valueSubstr = command.substr(upperCommand.find(",") + 2, upperCommand.find(")") - upperCommand.find(",") - 2);
+            std::strncpy(request.value, valueSubstr.c_str(), BLOCK_SIZE - 1);
+            request.value[BLOCK_SIZE - 1] = '\0'; // Ensure null-termination
         }
 
         return true;
@@ -153,7 +156,7 @@ int main() {
 
         // Send the request to the gateway
         send_request_to_gateway(request);
-    }
+    } 
 
     return 0;
 }

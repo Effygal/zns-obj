@@ -32,7 +32,6 @@ void deserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& requ
     memcpy(request.value, buffer, BLOCK_SIZE);
 }
 
-
 void ProcessGetRequest(const std::string& serializedData)
 {
     // Convert the received std::string to a byte buffer
@@ -45,6 +44,7 @@ void ProcessGetRequest(const std::string& serializedData)
     deserializeKVRequest(buffer, bufferSize, request);
 
     // Process GET request here
+
 }
 
 void ProcessPutRequest(const std::string& serializedData)
@@ -59,6 +59,7 @@ void ProcessPutRequest(const std::string& serializedData)
     deserializeKVRequest(buffer, bufferSize, request);
 
     // Process PUT request here
+    
 }
 
 void ProcessDelRequest(const std::string& serializedData)
@@ -73,12 +74,12 @@ void ProcessDelRequest(const std::string& serializedData)
     deserializeKVRequest(buffer, bufferSize, request);
 
     // Process DELETE request here
+
 }
 
 
 int main() {
     
-
     std::thread read_thread([]() {
         rpc::server rsrv(5555);
         rsrv.bind("HandleRead", [](std::string buffer) {
