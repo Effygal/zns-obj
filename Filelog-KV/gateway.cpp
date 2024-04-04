@@ -6,16 +6,15 @@
 #include <thread> 
 #include <vector> 
 #include "data.hpp"
+#include <sys/types.h>
 
 struct logger {
     std::string ip;
-    int wport;
-    int rport;
+    int port = 6666;
 };
 struct gw {
     std::string ip;
-    int bport;
-    int cport;
+    int port = 5555;
 };
 
 class Gateway{
@@ -63,8 +62,15 @@ class Gateway{
         std::map<key_t,LBAs> K_LBAs;        
 };
 
-int main() {
-    
+int main(int argc, char *argv[]) {
+    logger lg1, lg2, lg3;
+    lg1.ip = argv[2];
+    lg2.ip = argv[3];
+    lg3.ip = argv[4];
+
+    Gateway gw;
+
+
 
     std::thread read_thread([]() {
         rpc::server rsrv(5555);
