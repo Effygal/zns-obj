@@ -92,7 +92,7 @@ void ProcessGetRequest(const std::string& serializedData)
     SerializeCMDRequest(translated_cmd, cmdbuffer, cmdbufferSize);
     std::string serializedCMD = bufferToString(cmdbuffer, cmdbufferSize);
     rpc::client logger("127.0.0.1", 2222);	    
-    logger.call("Read", serializedCMD);
+    auto result = logger.call("Read", serializedCMD).as<int>();
 }
 
 void ProcessPutRequest(const std::string& serializedData)
@@ -113,9 +113,9 @@ void ProcessPutRequest(const std::string& serializedData)
     constexpr size_t cmdbufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
     char cmdbuffer[cmdbufferSize];
     SerializeCMDRequest(translated_cmd, cmdbuffer, cmdbufferSize);
-    std::string serializedCMD = bufferToString(cmdbuffer, cmdbufferSize);
+    std::string serializedCMD = bufferToString( cmdbuffer, cmdbufferSize);
     rpc::client logger("127.0.0.1", 1111);	    
-    logger.call("Append", serializedCMD);
+    auto result = logger.call("Append", serializedCMD).as<int>();
 }
 
 void ProcessDelRequest(const std::string& serializedData)

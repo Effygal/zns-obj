@@ -77,6 +77,7 @@ int main() {
         rpc::server rsrv(2222);
         rsrv.bind("Read", [](std::string buffer) {
             ProcessRead(buffer);
+            return 5;
         });
         rsrv.run();
     });

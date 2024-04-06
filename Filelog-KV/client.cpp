@@ -1,4 +1,7 @@
 #include "client.hpp"
+#include "read_config.hpp"
+
+#include <random>
 
 // Serializing the request in order to send it over the network
 void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSize)
@@ -144,6 +147,8 @@ int main() {
 
     std::string command;
     KVRequest request;
+
+    Config gateway_conf = parseConfig("config.json");
 
     while (true) {
         // Get user input for command
