@@ -12,9 +12,15 @@ void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSiz
 std::string bufferToString(const char* buffer, size_t bufferSize);
 
 // Define the RPC client
-void send_request_to_gateway(const KVRequest& request);
+void send_request_to_gateway(const KVRequest& request, std::string ip, int port);
 
 // Function to parse command and extract request type, key, and value
 bool parseCommand(const std::string& command, KVRequest& request);
+
+// Chosse a random gateway
+int ChooseRandGateway(int min, int max);
+
+// Choose a random number based on uniform distribution
+std::pair<std::string, int> splitAddress(const std::string& address);
 
 #endif // CLIENT_H

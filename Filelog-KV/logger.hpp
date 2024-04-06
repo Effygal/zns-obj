@@ -40,5 +40,6 @@ void stringToBuffer(const std::string& serializedData, char* buffer, size_t buff
 void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request);
 
 void ProcessAppend(const std::string& serializedData);
+void ProcessRead(const std::string& serializedData);
 
 #endif // LOGGER_HPP

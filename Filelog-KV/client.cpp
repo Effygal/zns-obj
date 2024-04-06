@@ -1,4 +1,33 @@
 #include "client.hpp"
+#include "read_config.hpp"
+
+// Choose a random number based on uniform distribution
+int ChooseRandGateway(int min, int max) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Create a uniform distribution
+    std::uniform_int_distribution<> distr(min, max);
+
+    return distr(gen);
+}
+
+// Make a pair of IP address and port
+std::pair<std::string, int> splitAddress(const std::string& address) {
+    std::istringstream iss(address);
+    std::string ip, portStr;
+
+    // Get IP address
+    std::getline(iss, ip, ':');
+
+    // Get port number
+    std::getline(iss, portStr);
+
+    // Convert port string to integer
+    int port = std::stoi(portStr);
+
+    return std::make_pair(ip, port);
+}
 
 // Serializing the request in order to send it over the network
 void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSize)
@@ -28,7 +57,7 @@ std::string bufferToString(const char* buffer, size_t bufferSize)
 }
 
 // Define the RPC client
-void send_request_to_gateway(const KVRequest& request) {
+void send_request_to_gateway(const KVRequest& request, std::string ip, int port) {
     // Serialize the request
     constexpr size_t bufferSize = sizeof(RequestType) + sizeof(int32_t) + BLOCK_SIZE;
     char buffer[bufferSize];
@@ -36,20 +65,9 @@ void send_request_to_gateway(const KVRequest& request) {
     // Convert the byte buffer to std::string
     std::string serializedData = bufferToString(buffer, bufferSize);
 
+    rpc::client client(ip, port);	    
     // Send the serialized request to the gateway
-    if (request.request_type == 1) {
-    	rpc::client client("127.0.0.1", 5555);	    
-    	client.call("HandleRead", serializedData);
-    }
-    else if (request.request_type == 2) {
-        rpc::client client("127.0.0.1", 6666);
-    	client.call("HandleWrite", serializedData);
-    }
-    else if (request.request_type == 3) {
-    	rpc::client client("127.0.0.1", 7777);
-	    client.call("HandleDel", serializedData);
-    }
-	
+    client.call("HandleReq", serializedData);
 }
 
 // Function to parse command and extract request type, key, and value
@@ -139,11 +157,16 @@ bool parseCommand(const std::string& command, KVRequest& request)
 }
 
 
-
 int main() {
 
     std::string command;
     KVRequest request;
+
+    // Read config.json file
+    Config conf = parseConfig("config.json");
+
+    // Split IP address and port number
+    auto result = splitAddress(conf.gateways[ChooseRandGateway(0, conf.gateways.size() - 1)]);
 
     while (true) {
         // Get user input for command
@@ -155,7 +178,7 @@ int main() {
         }
 
         // Send the request to the gateway
-        send_request_to_gateway(request);
+        send_request_to_gateway(request, result.first, result.second);
     } 
 
     return 0;
