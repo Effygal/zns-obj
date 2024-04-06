@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <random>
 
 // Define a struct to hold gateway and logger addresses
 struct Config {

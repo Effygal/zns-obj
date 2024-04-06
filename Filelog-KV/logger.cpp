@@ -66,18 +66,20 @@ int main() {
     // TODO: dispatch below on a separate threads
    
     std::thread append_thread([]() { 
-        rpc::server asrv(1111);
+        rpc::server asrv(4444);
         asrv.bind("Append", [](std::string buffer) {
             ProcessAppend(buffer);
+            // RETRURN VALUE NEEDS TO CHANGE LATER (TO THE LBA OR THE VALUE BASED ON REQ TYPE)
+            return 1;
         });
         asrv.run();
     });
 
      std::thread read_thread([]() {
-        rpc::server rsrv(2222);
+        rpc::server rsrv(19999);
         rsrv.bind("Read", [](std::string buffer) {
             ProcessRead(buffer);
-            return 5;
+            return 1;
         });
         rsrv.run();
     });

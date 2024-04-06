@@ -9,6 +9,7 @@
 #include <thread> 
 #include <vector> 
 #include "data.hpp"
+#include "read_config.hpp"
 
 struct logger {
     std::string ip;
@@ -51,11 +52,18 @@ std::string bufferToString(const char* buffer, size_t bufferSize);
 void DeserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request);
 
 // Process different types of requests
-void ProcessGetRequest(const std::string& serializedData);
-void ProcessPutRequest(const std::string& serializedData);
-void ProcessDelRequest(const std::string& serializedData);
+// void ProcessGetRequest(const std::string& serializedData);
+//void ProcessPutRequest(const std::string& serializedData);
+// void ProcessDelRequest(const std::string& serializedData);
+void ProcessRequest(const std::string& serializedData, Config conf);
 
 // Translate KV request to cmd
 void TranslateKVReq(KVRequest request);
+
+// Chosse a random logger
+int ChooseRandLogger(int min, int max);
+
+// Make a tuple of IP address and ports
+std::tuple<std::string, int, int> parseAddress(const std::string& addressStr);
 
 #endif // GATEWAY_H
