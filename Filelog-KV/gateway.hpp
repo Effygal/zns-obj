@@ -36,6 +36,7 @@ public:
 
     std::vector<logger> known_loggers;
     std::vector<gw> known_peers;
+    void TranslateKVReq(KVRequest request, cmd& cmnd, int logger_id);
 
 };
 

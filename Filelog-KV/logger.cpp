@@ -1,12 +1,58 @@
 #include "logger.hpp"
 
-Logger::Logger() {
-    // Constructor implementation goes here
-}
+class Logger {
 
-Logger::~Logger() {
-    // Destructor implementation goes here
-}
+	public:
+		Logger() : _cur_lba(0) {
+            pthread_mutex_init(&_mutex, nullptr);
+        }
+
+        ~Logger() {
+            pthread_mutex_destroy(&_mutex);
+        }
+        off_t Append(const LogEnt& logent) {
+            pthread_mutex_lock(&_mutex);
+            pwrite(_fd, &logent, sizeof(LogEnt), _cur_lba);
+            off_t offset = lseek(_fd, sizeof(LogEnt), SEEK_END);
+            _cur_lba = offset;
+            pthread_mutex_unlock(&_mutex);
+            ReplyAppend(logent.metadata.key, offset);
+            return offset;
+        }
+        void Read(key_t key, void* buff) {
+            off_t lba = K_LBAs[key].lbas[_logger_id] - sizeof(LogEnt);
+            pread(_fd, buff, sizeof(LogEnt), lba);
+        }
+
+        void ReplyAppend(key_t key, off_t lba) {
+            //only reply to the gateway that sent the request
+
+
+        }   
+        void ReplyRead(void* buff){
+            //only reply to the gateway that sent the request
+
+        }
+
+        void AppendThread(cmd& request) {
+            LogEnt logent(request.key, request.value);
+            off_t lba = Append(logent);
+            ReplyAppend(request.key, lba);
+            
+        }
+        void ReadThread(cmd& request) {
+            
+        }
+
+		private:
+			ssize_t _len;
+			int _fd;
+			off_t _cur_lba;
+			pthread_mutex_t _mutex;
+            int16_t _logger_id;
+            std::vector<std::pair<std::string, int>> _gws; // gateway servers, <ip, port>
+            int _port;
+};
 
 // Function to convert std::string to byte buffer
 void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize) {

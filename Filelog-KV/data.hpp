@@ -28,7 +28,8 @@ enum CmdType
 struct cmd {
 	CmdType op;
 	key_t key;
-	char value[BLOCK_SIZE] = {0};	
+	char value[BLOCK_SIZE] = {0};
+	off_t lba = -1;	
 };
 // gateways keep a K-LBAs map in a map manner
 // K_LBAs = std::map<key_t,LBAs>, not sure.
@@ -124,23 +125,19 @@ struct header_t {
 };
 
 struct LogEnt {
-    header_t metadata;
+	header_t metadata;
     char data[BLOCK_SIZE-sizeof(header_t)] = {0};
 
-	void set_key(key_t key) {
+	LogEnt (key_t key, std::string value){
 		metadata.key = key;
-	}
-	void set_length(ssize_t length) {
-		metadata.length = length;
+		metadata.length = value.size();
+		std::strcpy(data, value.c_str());
 	}
 	key_t get_key() {
 		return metadata.key;
 	}
 	ssize_t get_length() {
 		return metadata.length;
-	}
-	void set_value(std::string value) {
-		std::strcpy(data, value.c_str());
 	}
 	char* get_value() {
 		return data;
