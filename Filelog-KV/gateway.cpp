@@ -130,17 +130,24 @@
 */
 void Gateway::HandleWrite(KVRequest command) {
     // for each logger in known_loggers
+    std::cout << "Handling write" << std::endl;
+    std::cout << "Key: " << command.key << std::endl;
+    std::cout << "Value: " << command.value << std::endl;
     LBAs lbas;
     cmd cmnd;
     cmnd.op = 2;
     cmnd.key = command.key;
     std::memcpy(cmnd.value, command.value, BLOCK_SIZE);
     for (auto logger : known_loggers) {
+        std::cout << "Sending to logger: " << logger.ip << logger.wport << std::endl;
         rpc::client ac(logger.ip, logger.wport);
+        std::cout << "connected" << std::endl;
         auto reply = ac.call("Append", cmnd);
         AppendReply append_reply = reply.as<AppendReply>();
+        std::cout << "Got reply: " << append_reply._logger_id << " " << append_reply.lba << std::endl;
         // Update the K_LBAs map
         lbas.lbas[append_reply._logger_id] = append_reply.lba;
+        break;
     }
     K_LBAs[command.key] = lbas;
     HandleBroadcast(command.key, lbas);
@@ -172,6 +179,7 @@ void Gateway::HandleRead(KVRequest command) {
 
 void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
     for (auto peer : known_peers) {
+        std::cout << "Broadcasting to peer: " << peer.ip << peer.bport << std::endl;
         rpc::client bc(peer.ip, peer.bport);
         bc.call("HandleCatchup", key, lbas);
     }
@@ -192,28 +200,37 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
 int main(int argc, char** argv) {
     int gatewayID = atoi(argv[1]);
     Gateway gateway;
-    gateway.bport = 55000 + gatewayID;
-    gateway.cport = 66000 + gatewayID;
+    gateway.bport = 5500 + gatewayID;
+    gateway.cport = 6600 + gatewayID;
     // Load the configuration file later
-    gateway.known_peers.push_back(gw{"127.0.0.1", 55000+gatewayID+1, 66000+gatewayID+1});
-    gateway.known_loggers.push_back(logger{"127.0.0.1", 50001, 66001});
+    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+gatewayID+1, 6600+gatewayID+1});
+    gateway.known_loggers.push_back(logger{"127.0.0.1", 5001, 6001});
+    std::cout << "Gateway " << gatewayID << " started" << std::endl;
 
-    rpc::server srv(gateway.cport); // Use the same port for all services
+    std::thread server_thread([&gateway]() {
+        rpc::server srv(gateway.cport); // Use the same port for all services
+        std::cout << "Gateway listening on port " << gateway.cport << std::endl;
+        srv.bind("HandleRead", [&gateway](KVRequest command) {
+            gateway.HandleRead(command);
+        });
 
-    srv.bind("HandleRead", [&gateway](KVRequest command) {
-        gateway.HandleRead(command);
+        srv.bind("HandleWrite", [&gateway](KVRequest command) {
+            gateway.HandleWrite(command);
+        });
+
+        srv.run();
     });
 
-    srv.bind("HandleWrite", [&gateway](KVRequest command) {
-        gateway.HandleWrite(command);
+    std::thread catchup_thread([&gateway]() {
+        rpc::server bsrv(gateway.bport);
+        std::cout << "listening on port " << gateway.bport << "for broadcast catch up." << std::endl;
+        bsrv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
+            gateway.HandleCatchup(key, lbas);
+        });
+        bsrv.run();
     });
-
-    srv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
-        gateway.HandleCatchup(key, lbas);
-    });
-
-    srv.run();
-
+    server_thread.join();
+    catchup_thread.join();
     return 0;
 }
 

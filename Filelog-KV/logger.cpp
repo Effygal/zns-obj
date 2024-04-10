@@ -23,6 +23,8 @@ void Logger::Read(key_t key, void* buff, off_t lba) {
 // }
 
 AppendReply Logger::AppendThread(cmd& request) {
+    std::cout << "Received Append request "<< request.key << request.value << std::endl;
+
     LogEnt logent(request.key, request.value);
     off_t lba = Append(logent);
     AppendReply reply = {_logger_id, request.key, lba};
@@ -93,11 +95,22 @@ int main(int argc, char** argv) {
     int8_t loggerID = atoi(argv[1]);
     Logger logger; 
     logger._logger_id = loggerID; //dup this info to config file later
-    logger.wport = 50000 + loggerID;
-    logger.rport = 60000 + loggerID;
+    logger.wport = 6000 + loggerID;
+    logger.rport = 5000 + loggerID;
+    // std::thread append_thread([&logger]() { 
+    //     rpc::server asrv(logger.wport);
+    //     asrv.bind("Append", [&logger](cmd request) -> AppendReply {
+    //         std::cout << "Received Append request "<< request.key << request.value << std::endl;
+    //         AppendReply reply = logger.AppendThread(request);
+    //         return reply;//client on gateway get this reply
+    //     });
+    //     asrv.run();
+    // });
+
     std::thread append_thread([&logger]() { 
         rpc::server asrv(logger.wport);
         asrv.bind("Append", [&logger](cmd request) -> AppendReply {
+            std::cout << "Received Append request "<< request.key << request.value << std::endl;
             AppendReply reply = logger.AppendThread(request);
             return reply;//client on gateway get this reply
         });

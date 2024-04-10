@@ -42,7 +42,7 @@ struct AppendReply {
 	int16_t _logger_id;
     key_t key;
     off_t lba;
-	MSGPACK_DEFINE(_logger_id, key, lba);
+	MSGPACK_DEFINE_ARRAY(_logger_id, key, lba);
 };
 
 struct ReadReply {

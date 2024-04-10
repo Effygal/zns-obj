@@ -30,8 +30,8 @@ public:
     AppendReply AppendThread(cmd& request);
     ReadReply ReadThread(cmd& request, off_t lba);
     int8_t _logger_id;
-    int wport = 50000 + _logger_id;
-    int rport = 60000 + _logger_id;
+    int wport;
+    int rport;
 private:
     ssize_t _len;
     int _fd;

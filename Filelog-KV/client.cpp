@@ -186,13 +186,15 @@ int main() {
         std::strncpy(request.value, "value", BLOCK_SIZE - 1);
         request.value[BLOCK_SIZE - 1] = '\0'; // Ensure null-termination
 
-        int gateway_cport = 66001;
+        int gateway_cport = 6601;
         rpc::client client("127.0.0.1", gateway_cport);
         switch(request.request_type) {
             case 2:
+                std::cout << "PUT" << request.key << request.value << std::endl;
                 client.call("HandleWrite", request);
                 break;
             case 1:
+                std::cout << "GET" << request.key << std::endl;
                 client.call("HandleRead", request);
                 break;
             default:
