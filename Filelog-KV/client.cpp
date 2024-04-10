@@ -33,14 +33,14 @@ std::pair<std::string, int> splitAddress(const std::string& address) {
 void serializeKVRequest(const KVRequest& request, char* buffer, size_t bufferSize)
 {
     // Check if the buffer is large enough to hold the serialized data
-    if (bufferSize < sizeof(RequestType) + sizeof(int32_t) + BLOCK_SIZE) {
+    if (bufferSize < sizeof(int8_t) + sizeof(int32_t) + BLOCK_SIZE) {
         // Handle error (e.g., throw an exception or return an error code)
         return;
     }
 
     // Serialize request_type
-    memcpy(buffer, &request.request_type, sizeof(RequestType));
-    buffer += sizeof(RequestType);
+    memcpy(buffer, &request.request_type, sizeof(int8_t));
+    buffer += sizeof(int8_t);
 
     // Serialize key
     memcpy(buffer, &request.key, sizeof(int32_t));
@@ -59,7 +59,7 @@ std::string bufferToString(const char* buffer, size_t bufferSize)
 // Define the RPC client
 void send_request_to_gateway(const KVRequest& request, std::string ip, int port) {
     // Serialize the request
-    constexpr size_t bufferSize = sizeof(RequestType) + sizeof(int32_t) + BLOCK_SIZE;
+    constexpr size_t bufferSize = sizeof(int8_t) + sizeof(int32_t) + BLOCK_SIZE;
     char buffer[bufferSize];
     serializeKVRequest(request, buffer, bufferSize);
     // Convert the byte buffer to std::string
@@ -90,7 +90,7 @@ bool parseCommand(const std::string& command, KVRequest& request)
 
         // Set the request type based on the command type
         if (commandType == "GET") {
-            request.request_type = GET;
+            request.request_type = 1;
             // Check if there's anything after the closing parenthesis
             if (upperCommand.substr(closeParenPos + 1).find_first_not_of(" \t\n\v\f\r") != std::string::npos) {
                 std::cerr << "GET command should have only one argument (the key)\n";
@@ -102,14 +102,14 @@ bool parseCommand(const std::string& command, KVRequest& request)
                 return false;
             }
         } else if (commandType == "PUT") {
-            request.request_type = PUT;
+            request.request_type = 2;
             // Check if there's exactly one comma between the arguments
             if (std::count(upperCommand.begin(), upperCommand.end(), ',') != 1) {
                 std::cerr << "PUT command should have two arguments (the key and the value)\n";
                 return false;
             }
         } else if (commandType == "DEL") {
-            request.request_type = DEL;
+            request.request_type = 3;
             // Check if there's anything after the closing parenthesis
             if (upperCommand.substr(closeParenPos + 1).find_first_not_of(" \t\n\v\f\r") != std::string::npos) {
                 std::cerr << "DEL command should have only one argument (the key)\n";
@@ -138,7 +138,7 @@ bool parseCommand(const std::string& command, KVRequest& request)
         }
 
         // If PUT or DEL command, check if there's any value specified
-        if (request.request_type == PUT) {
+        if (request.request_type == 2) {
             auto commaPos = upperCommand.find(',');
             if (commaPos == std::string::npos) {
                 std::cerr << "Command should have two arguments (the key and the value)\n";
@@ -163,23 +163,43 @@ int main() {
     KVRequest request;
 
     // Read config.json file
-    Config conf = parseConfig("config.json");
+    // Config conf = parseConfig("config.json");
 
     // Split IP address and port number
-    auto result = splitAddress(conf.gateways[ChooseRandGateway(0, conf.gateways.size() - 1)]);
+    // auto result = splitAddress(conf.gateways[ChooseRandGateway(0, conf.gateways.size() - 1)]);
 
-    while (true) {
-        // Get user input for command
-        std::getline(std::cin, command);
+    // while (true) {
+    //     // Get user input for command
+    //     std::getline(std::cin, command);
 
         // Parse command and extract request type, key, and value
-        if (!parseCommand(command, request)) {
-            continue; // Ask for input again if parsing fails
-        }
+        // if (!parseCommand(command, request)) {
+        //     continue; // Ask for input again if parsing fails
+        // }
 
         // Send the request to the gateway
-        send_request_to_gateway(request, result.first, result.second);
-    } 
+        // send_request_to_gateway(request, result.first, result.second);
+        //try this:
+       
+        request.request_type = 2;
+        request.key = 1;
+        std::strncpy(request.value, "value", BLOCK_SIZE - 1);
+        request.value[BLOCK_SIZE - 1] = '\0'; // Ensure null-termination
+
+        int gateway_cport = 66001;
+        rpc::client client("127.0.0.1", gateway_cport);
+        switch(request.request_type) {
+            case 2:
+                client.call("HandleWrite", request);
+                break;
+            case 1:
+                client.call("HandleRead", request);
+                break;
+            default:
+                break;
+        }
+    // } 
 
     return 0;
 }
+

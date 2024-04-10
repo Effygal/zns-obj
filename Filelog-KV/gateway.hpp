@@ -7,18 +7,21 @@
 #include "rpc/server.h"
 #include "rpc/client.h"
 #include <thread> 
+#include <pthread.h> // pthread_mutex_t
 #include <vector> 
 #include "data.hpp"
 #include "read_config.hpp"
 
 struct logger {
     std::string ip;
-    int wport;
+    // below two only for local test, when distributed, can be removed.
     int rport;
+    int wport;
 };
 
 struct gw {
-    std::string ip;
+    std::string ip; 
+    // below two only for local test, when distributed, can be removed.
     int bport;
     int cport;
 };
@@ -26,18 +29,23 @@ struct gw {
 class Gateway {
 private:
     std::map<key_t, LBAs> K_LBAs;
+    pthread_mutex_t _mutex;
 public:
-    Gateway();
-    ~Gateway();
-    void HandleRead(cmd command);
-    off_t HandleWrite(cmd command);
-    void HandleBroadcast(key_t key, off_t lba);
-    void HandleCatchup(key_t key, off_t lba);
+    Gateway(){
+        pthread_mutex_init(&_mutex, NULL);
+    };
+    ~Gateway(){
+        pthread_mutex_destroy(&_mutex);
+    };
+    void HandleRead(KVRequest command);
+    void HandleWrite(KVRequest  command);
+    void HandleBroadcast(key_t key, LBAs lbas);
+    void HandleCatchup(key_t key, LBAs lbas);
 
     std::vector<logger> known_loggers;
     std::vector<gw> known_peers;
-    void TranslateKVReq(KVRequest request, cmd& cmnd, int logger_id);
-
+    int bport;
+    int cport;
 };
 
 
@@ -59,7 +67,7 @@ void DeserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& requ
 void ProcessRequest(const std::string& serializedData, Config conf);
 
 // Translate KV request to cmd
-void TranslateKVReq(KVRequest request);
+void TranslateKVReq(KVRequest request, cmd& cmnd);
 
 // Chosse a random logger
 int ChooseRandLogger(int min, int max);

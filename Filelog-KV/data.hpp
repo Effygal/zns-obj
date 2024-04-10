@@ -5,9 +5,8 @@
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
-#include "tcp_utils.hpp"
-#include "udp_utils.hpp"
 #include <iostream>
+#include <rpc/msgpack.hpp>
 
 #define BLOCK_SIZE 4096
 
@@ -19,31 +18,38 @@ using nblk_t = int16_t;
  */
 
 // cmd.op types
-enum CmdType
-{	
-	READ = 1,
-	APPEND = 2,
-};
+// enum CmdType
+// {	
+// 	READ = 1,
+// 	APPEND = 2,
+// };
 // gateways translate KV request to cmd
 struct cmd {
-	CmdType op;
+	int8_t op;
 	key_t key;
 	char value[BLOCK_SIZE] = {0};
-	off_t lba = -1;	
+	MSGPACK_DEFINE(op, key, value);
 };
 // gateways keep a K-LBAs map in a map manner
 // K_LBAs = std::map<key_t,LBAs>, not sure.
 // in fact, the MapVal can also serve as a vector clock because each LBAs only grows up.
 struct LBAs {
 	std::array<off_t, 3> lbas;
+	MSGPACK_DEFINE(lbas); 
 };
 
-struct LoggerReply {
+struct AppendReply {
 	int16_t _logger_id;
     key_t key;
     off_t lba;
+	MSGPACK_DEFINE(_logger_id, key, lba);
 };
 
+struct ReadReply {
+	key_t key;
+	std::string value;
+	MSGPACK_DEFINE(key, value);
+};
 /*
 class LoggedMap
 {
@@ -66,18 +72,19 @@ public:
 	void apply_up_to(oplogidx_t idx);
 };
 */
-enum RequestType
-{
-	GET = 1,
-	PUT = 2,
-	DEL = 3,
-};
+// enum RequestType
+// {
+// 	GET = 1,
+// 	PUT = 2,
+// 	DEL = 3,
+// };
 
 struct KVRequest 
 {
-	RequestType request_type;
+	int8_t request_type;
 	key_t key;
 	char value[BLOCK_SIZE] = {0};
+	MSGPACK_DEFINE(request_type, key, value);
 };
 
 struct ReplicationRequest 

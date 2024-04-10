@@ -2,7 +2,6 @@
 #define LOGGER_HPP
 
 #include <iostream>
-//#include <asio.hpp>
 #include <cstring>
 #include <thread>
 #include <queue>
@@ -10,27 +9,36 @@
 #include "data.hpp"
 #include "rpc/server.h"
 #include "rpc/client.h"
-
+#include <fcntl.h> // Include the <fcntl.h> header file to define the O_CREAT constant
 
 class Logger {
 public:
-    Logger();
-    ~Logger();
-
+    
+    Logger(){
+        _fd = open("log.txt", O_CREAT | O_RDWR, 0666); // Use open() instead of fopen()
+        _cur_lba = 0;
+        pthread_mutex_init(&_mutex, NULL);
+    };
+    ~Logger(){
+        close(_fd);
+        pthread_mutex_destroy(&_mutex);
+    };
     off_t Append(const LogEnt& logent);
-    void Read(key_t key, void* buff);
-
+    void Read(key_t key, void* buff, off_t lba);
+    // void ReplyAppend(key_t key, off_t lba, int8_t gw_id);
+    // void ReplyRead(void* buff);
+    AppendReply AppendThread(cmd& request);
+    ReadReply ReadThread(cmd& request, off_t lba);
+    int8_t _logger_id;
+    int wport = 50000 + _logger_id;
+    int rport = 60000 + _logger_id;
 private:
     ssize_t _len;
     int _fd;
     off_t _cur_lba;
     pthread_mutex_t _mutex;
-    int16_t _logger_id;
     std::vector<std::pair<std::string, int>> _gws; // gateway servers, <ip, port>
-    int _wport;
-    int _rport;
-
-    void BroadcastLBA(key_t key, off_t lba);
+    
 };
 
 // Function to convert std::string to byte buffer

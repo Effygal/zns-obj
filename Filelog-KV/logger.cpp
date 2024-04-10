@@ -1,58 +1,40 @@
 #include "logger.hpp"
 
-class Logger {
+off_t Logger::Append(const LogEnt& logent) {
+    pthread_mutex_lock(&_mutex);
+    pwrite(_fd, &logent, sizeof(LogEnt), _cur_lba);
+    off_t offset = lseek(_fd, sizeof(LogEnt), SEEK_END);
+    _cur_lba = offset;
+    pthread_mutex_unlock(&_mutex);
+    return offset;
+}
+void Logger::Read(key_t key, void* buff, off_t lba) {
+    pread(_fd, buff, sizeof(LogEnt), lba);
+}
 
-	public:
-		Logger() : _cur_lba(0) {
-            pthread_mutex_init(&_mutex, nullptr);
-        }
+// void Logger::ReplyAppend(key_t key, off_t lba, int8_t gw_id) {
+//     //only reply to the gateway that sent the request
+//     rpc::client c(_gws[gw_id].first, _gws[gw_id].second);
 
-        ~Logger() {
-            pthread_mutex_destroy(&_mutex);
-        }
-        off_t Append(const LogEnt& logent) {
-            pthread_mutex_lock(&_mutex);
-            pwrite(_fd, &logent, sizeof(LogEnt), _cur_lba);
-            off_t offset = lseek(_fd, sizeof(LogEnt), SEEK_END);
-            _cur_lba = offset;
-            pthread_mutex_unlock(&_mutex);
-            ReplyAppend(logent.metadata.key, offset);
-            return offset;
-        }
-        void Read(key_t key, void* buff) {
-            off_t lba = K_LBAs[key].lbas[_logger_id] - sizeof(LogEnt);
-            pread(_fd, buff, sizeof(LogEnt), lba);
-        }
+// }   
+// void Logger::ReplyRead(void* buff){
+//     //only reply to the gateway that sent the request
 
-        void ReplyAppend(key_t key, off_t lba) {
-            //only reply to the gateway that sent the request
+// }
 
+AppendReply Logger::AppendThread(cmd& request) {
+    LogEnt logent(request.key, request.value);
+    off_t lba = Append(logent);
+    AppendReply reply = {_logger_id, request.key, lba};
+    return reply;
+}
+ReadReply Logger::ReadThread(cmd& request, off_t lba) {
+    Read(request.key, request.value, lba);
+    std::string value(request.value);
+    ReadReply reply = {request.key, value};
+    return reply;
+}
 
-        }   
-        void ReplyRead(void* buff){
-            //only reply to the gateway that sent the request
-
-        }
-
-        void AppendThread(cmd& request) {
-            LogEnt logent(request.key, request.value);
-            off_t lba = Append(logent);
-            ReplyAppend(request.key, lba);
-            
-        }
-        void ReadThread(cmd& request) {
-            
-        }
-
-		private:
-			ssize_t _len;
-			int _fd;
-			off_t _cur_lba;
-			pthread_mutex_t _mutex;
-            int16_t _logger_id;
-            std::vector<std::pair<std::string, int>> _gws; // gateway servers, <ip, port>
-            int _port;
-};
 
 // Function to convert std::string to byte buffer
 void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize) {
@@ -66,14 +48,14 @@ void stringToBuffer(const std::string& serializedData, char* buffer, size_t buff
 // Function to deserialize byte buffer into cmd struct
 void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request) {
     // Check if the buffer is large enough to hold the serialized data
-    if (bufferSize < sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE) {
+    if (bufferSize < sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE) {
         // Handle error (e.g., throw an exception or return an error code)
         return;
     }
 
     // Deserialize op
-    memcpy(&request.op, buffer, sizeof(CmdType));
-    buffer += sizeof(CmdType);
+    memcpy(&request.op, buffer, sizeof(int8_t));
+    buffer += sizeof(int8_t);
 
     // Deserialize key
     memcpy(&request.key, buffer, sizeof(key_t));
@@ -85,7 +67,7 @@ void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request) 
 
 void ProcessAppend(const std::string& serializedData) {
     // Convert the received std::string to a byte buffer
-    constexpr size_t bufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
+    constexpr size_t bufferSize = sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE;
     char buffer[bufferSize];
     stringToBuffer(serializedData, buffer, bufferSize);
 
@@ -96,43 +78,43 @@ void ProcessAppend(const std::string& serializedData) {
 
 void ProcessRead(const std::string& serializedData) {
     // Convert the received std::string to a byte buffer
-    constexpr size_t bufferSize = sizeof(CmdType) + sizeof(key_t) + BLOCK_SIZE;
+    constexpr size_t bufferSize = sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE;
     char buffer[bufferSize];
     stringToBuffer(serializedData, buffer, bufferSize);
 
     cmd cmnd;
     DeserializeCMDRequest(buffer, bufferSize, cmnd);
     std::cout << cmnd.op << std::endl;
+    
 }
 
 
-int main() {
-    Logger logger;
-
-    // TODO: dispatch below on a separate threads
-   
-    std::thread append_thread([]() { 
-        rpc::server asrv(4444);
-        asrv.bind("Append", [](std::string buffer) {
-            ProcessAppend(buffer);
-            // RETRURN VALUE NEEDS TO CHANGE LATER (TO THE LBA OR THE VALUE BASED ON REQ TYPE)
-            return 1;
+int main(int argc, char** argv) {
+    int8_t loggerID = atoi(argv[1]);
+    Logger logger; 
+    logger._logger_id = loggerID; //dup this info to config file later
+    logger.wport = 50000 + loggerID;
+    logger.rport = 60000 + loggerID;
+    std::thread append_thread([&logger]() { 
+        rpc::server asrv(logger.wport);
+        asrv.bind("Append", [&logger](cmd request) -> AppendReply {
+            AppendReply reply = logger.AppendThread(request);
+            return reply;//client on gateway get this reply
         });
         asrv.run();
     });
 
-     std::thread read_thread([]() {
-        rpc::server rsrv(19999);
-        rsrv.bind("Read", [](std::string buffer) {
-            ProcessRead(buffer);
-            return 1;
+    std::thread read_thread([&logger]() {
+        rpc::server rsv(logger.rport);
+        rsv.bind("Read", [&logger](cmd request, off_t lba) -> ReadReply {
+            ReadReply reply = logger.ReadThread(request, lba);
+            return reply;
         });
-        rsrv.run();
+        rsv.run();
     });
-
 
     append_thread.join();
     read_thread.join();
-
     return 0;
 }
+//usage: ./logger <logger_id>
