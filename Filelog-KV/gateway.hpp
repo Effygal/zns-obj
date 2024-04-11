@@ -48,6 +48,7 @@ public:
 
     std::vector<logger> known_loggers;
     std::vector<gw> known_peers;
+    std::string ip;
     int bport;
     int cport;
 };

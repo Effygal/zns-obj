@@ -48,6 +48,12 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
 }
 
 int main(int argc, char** argv) {
+
+    if (argc < 2 ) {
+        std::cerr << "Usage: ./logger <logger_id(0-2)>" << std::endl;
+        return 1;
+    }
+
     int8_t loggerID = atoi(argv[1]);//0-2
     Logger logger; 
     logger._logger_id = loggerID; // read this from config file later...

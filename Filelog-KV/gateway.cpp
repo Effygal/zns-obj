@@ -112,10 +112,21 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
 }
 
 int main(int argc, char** argv) {
+
+    if (argc < 2 ) {
+        std::cerr << "Usage: ./gateway <gateway_id(0-2)>" << std::endl;
+        return 1;
+    }
+
+    // Read config.json file
+    Config conf = parseConfig("config.json");
+
     int gatewayID = atoi(argv[1]);//0-2
+    auto result = parseAddress(conf.gateways[gatewayID]);
     Gateway gateway;
-    gateway.bport = 5500 + gatewayID;
-    gateway.cport = 6600 + gatewayID;
+    gateway.ip = std::get<0>(result);
+    gateway.bport = std::get<1>(result);
+    gateway.cport = std::get<2>(result);;
     // Load the configuration file later
     int peer1ID = (gatewayID + 1) % 3;
     int peer2ID = (gatewayID + 2) % 3;
