@@ -2,94 +2,49 @@
 
 off_t Logger::Append(const LogEnt& logent) {
     pthread_mutex_lock(&_mutex);
-    pwrite(_fd, &logent, sizeof(LogEnt), _cur_lba);
-    off_t offset = lseek(_fd, sizeof(LogEnt), SEEK_END);
+    ssize_t bytes_written = pwrite(_fd, &logent, sizeof(LogEnt), _cur_lba);
+    if (bytes_written < 0) {
+        perror("Write error");
+        pthread_mutex_unlock(&_mutex);
+        return -1; // Return an error value
+    }
+    off_t offset = lseek(_fd, bytes_written, SEEK_CUR); 
+    if (offset < 0) {
+        perror("Seek error");
+        // Handle seek error, possibly return an error code
+        pthread_mutex_unlock(&_mutex);
+        return -1; // Return an error value
+    }
+    std::cout << "Wrote " << bytes_written << " bytes to fd: "<< _fd << std::endl;
     _cur_lba = offset;
     pthread_mutex_unlock(&_mutex);
     return offset;
 }
-void Logger::Read(key_t key, void* buff, off_t lba) {
-    pread(_fd, buff, sizeof(LogEnt), lba);
-}
-
-// void Logger::ReplyAppend(key_t key, off_t lba, int8_t gw_id) {
-//     //only reply to the gateway that sent the request
-//     rpc::client c(_gws[gw_id].first, _gws[gw_id].second);
-
-// }   
-// void Logger::ReplyRead(void* buff){
-//     //only reply to the gateway that sent the request
-
-// }
 
 AppendReply Logger::AppendThread(cmd& request) {
     std::cout << "Received Append request "<< request.key << request.value << std::endl;
 
     LogEnt logent(request.key, request.value);
     off_t lba = Append(logent);
+    std::cout << "logEnt size: "<< sizeof(LogEnt) << std::endl;
     AppendReply reply = {_logger_id, request.key, lba};
     return reply;
 }
+
 ReadReply Logger::ReadThread(cmd& request, off_t lba) {
-    Read(request.key, request.value, lba);
-    std::string value(request.value);
+    std::cout << "Received Read request " << request.key << " at lba: " << lba-BLOCK_SIZE << std::endl;
+    char buffer[BLOCK_SIZE];
+    ssize_t bytes_read = pread(_fd, buffer, sizeof(buffer), lba - BLOCK_SIZE);
+    if (bytes_read < 0) {
+        perror("Read error");
+        return {}; 
+    }
+    std::cout << "Read " << bytes_read << " bytes" << std::endl;
+    std::string value(buffer, bytes_read); // Use bytes_read to construct the string
+    std::cout << "Read value: " << value << std::endl;
     ReadReply reply = {request.key, value};
     return reply;
 }
-
-
-// Function to convert std::string to byte buffer
-void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize) {
-    if (serializedData.size() > bufferSize) {
-        // Handle error (buffer overflow)
-        return;
-    }
-    memcpy(buffer, serializedData.data(), serializedData.size());
-}
-
-// Function to deserialize byte buffer into cmd struct
-void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request) {
-    // Check if the buffer is large enough to hold the serialized data
-    if (bufferSize < sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE) {
-        // Handle error (e.g., throw an exception or return an error code)
-        return;
-    }
-
-    // Deserialize op
-    memcpy(&request.op, buffer, sizeof(int8_t));
-    buffer += sizeof(int8_t);
-
-    // Deserialize key
-    memcpy(&request.key, buffer, sizeof(key_t));
-    buffer += sizeof(key_t);
-
-    // Deserialize value
-    memcpy(request.value, buffer, BLOCK_SIZE);
-}
-
-void ProcessAppend(const std::string& serializedData) {
-    // Convert the received std::string to a byte buffer
-    constexpr size_t bufferSize = sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE;
-    char buffer[bufferSize];
-    stringToBuffer(serializedData, buffer, bufferSize);
-
-    cmd cmnd;
-    DeserializeCMDRequest(buffer, bufferSize, cmnd);
-    std::cout << cmnd.op << std::endl;
-}
-
-void ProcessRead(const std::string& serializedData) {
-    // Convert the received std::string to a byte buffer
-    constexpr size_t bufferSize = sizeof(int8_t) + sizeof(key_t) + BLOCK_SIZE;
-    char buffer[bufferSize];
-    stringToBuffer(serializedData, buffer, bufferSize);
-
-    cmd cmnd;
-    DeserializeCMDRequest(buffer, bufferSize, cmnd);
-    std::cout << cmnd.op << std::endl;
-    
-}
-
 
 int main(int argc, char** argv) {
     int8_t loggerID = atoi(argv[1]);//0-2
@@ -97,15 +52,6 @@ int main(int argc, char** argv) {
     logger._logger_id = loggerID; //dup this info to config file later
     logger.wport = 6000 + loggerID;
     logger.rport = 5000 + loggerID;
-    // std::thread append_thread([&logger]() { 
-    //     rpc::server asrv(logger.wport);
-    //     asrv.bind("Append", [&logger](cmd request) -> AppendReply {
-    //         std::cout << "Received Append request "<< request.key << request.value << std::endl;
-    //         AppendReply reply = logger.AppendThread(request);
-    //         return reply;//client on gateway get this reply
-    //     });
-    //     asrv.run();
-    // });
 
     std::thread append_thread([&logger]() { 
         rpc::server asrv(logger.wport);

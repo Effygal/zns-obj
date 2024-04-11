@@ -25,8 +25,6 @@ public:
     };
     off_t Append(const LogEnt& logent);
     void Read(key_t key, void* buff, off_t lba);
-    // void ReplyAppend(key_t key, off_t lba, int8_t gw_id);
-    // void ReplyRead(void* buff);
     AppendReply AppendThread(cmd& request);
     ReadReply ReadThread(cmd& request, off_t lba);
     int8_t _logger_id;
@@ -40,14 +38,4 @@ private:
     std::vector<std::pair<std::string, int>> _gws; // gateway servers, <ip, port>
     
 };
-
-// Function to convert std::string to byte buffer
-void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize);
-
-// Function to deserialize byte buffer into cmd struct
-void DeserializeCMDRequest(const char* buffer, size_t bufferSize, cmd& request);
-
-void ProcessAppend(const std::string& serializedData);
-void ProcessRead(const std::string& serializedData);
-
 #endif // LOGGER_HPP

@@ -50,34 +50,6 @@ struct ReadReply {
 	std::string value;
 	MSGPACK_DEFINE(key, value);
 };
-/*
-class LoggedMap
-{
-private:
-	std::vector<MapOp> _oplog;
-	std::shared_ptr<SyncMap<customerid_t, record_t>> _map;
-
-public:
-	LoggedMap();
-	~LoggedMap();
-
-	// Shouldn't be copied
-	LoggedMap(LoggedMap &src) = delete;
-	LoggedMap &operator=(LoggedMap &src) = delete;
-
-	LoggedMap(LoggedMap &&src);
-	LoggedMap &operator=(LoggedMap &&src);
-
-	oplogidx_t add_op(MapOp op);
-	void apply_up_to(oplogidx_t idx);
-};
-*/
-// enum RequestType
-// {
-// 	GET = 1,
-// 	PUT = 2,
-// 	DEL = 3,
-// };
 
 struct KVRequest 
 {
