@@ -1,6 +1,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
-
+#include <cstring>
 #include <iostream>
 #include "rpc/client.h"
 #include "data.hpp"

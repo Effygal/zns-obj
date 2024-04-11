@@ -92,7 +92,7 @@ void ProcessRead(const std::string& serializedData) {
 
 
 int main(int argc, char** argv) {
-    int8_t loggerID = atoi(argv[1]);
+    int8_t loggerID = atoi(argv[1]);//0-2
     Logger logger; 
     logger._logger_id = loggerID; //dup this info to config file later
     logger.wport = 6000 + loggerID;
@@ -130,4 +130,4 @@ int main(int argc, char** argv) {
     read_thread.join();
     return 0;
 }
-//usage: ./logger <logger_id>
+//usage: ./logger <logger_id(0-2)>

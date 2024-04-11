@@ -33,8 +33,12 @@ private:
 public:
     Gateway(){
         pthread_mutex_init(&_mutex, NULL);
+        K_LBAs[0] = LBAs{{0,0,0}};
+        K_LBAs[1] = LBAs{{0,0,0}};
+        K_LBAs[2] = LBAs{{0,0,0}};
     };
     ~Gateway(){
+        K_LBAs.clear();
         pthread_mutex_destroy(&_mutex);
     };
     void HandleRead(KVRequest command);

@@ -147,7 +147,6 @@ void Gateway::HandleWrite(KVRequest command) {
         std::cout << "Got reply: " << append_reply._logger_id << " " << append_reply.lba << std::endl;
         // Update the K_LBAs map
         lbas.lbas[append_reply._logger_id] = append_reply.lba;
-        break;
     }
     K_LBAs[command.key] = lbas;
     HandleBroadcast(command.key, lbas);
@@ -198,18 +197,23 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
 }
 
 int main(int argc, char** argv) {
-    int gatewayID = atoi(argv[1]);
+    int gatewayID = atoi(argv[1]);//0-2
     Gateway gateway;
     gateway.bport = 5500 + gatewayID;
     gateway.cport = 6600 + gatewayID;
     // Load the configuration file later
-    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+gatewayID+1, 6600+gatewayID+1});
+    int peer1ID = (gatewayID + 1) % 3;
+    int peer2ID = (gatewayID + 2) % 3;
+    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+peer1ID, 6600+peer1ID});
+    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+peer2ID, 6600+peer2ID});
+    gateway.known_loggers.push_back(logger{"127.0.0.1", 5000, 6000});
     gateway.known_loggers.push_back(logger{"127.0.0.1", 5001, 6001});
+    gateway.known_loggers.push_back(logger{"127.0.0.1", 5002, 6002});
     std::cout << "Gateway " << gatewayID << " started" << std::endl;
 
     std::thread server_thread([&gateway]() {
         rpc::server srv(gateway.cport); // Use the same port for all services
-        std::cout << "Gateway listening on port " << gateway.cport << std::endl;
+        std::cout << "listening on port " << gateway.cport << " for serveice..." << std::endl;
         srv.bind("HandleRead", [&gateway](KVRequest command) {
             gateway.HandleRead(command);
         });
@@ -223,7 +227,7 @@ int main(int argc, char** argv) {
 
     std::thread catchup_thread([&gateway]() {
         rpc::server bsrv(gateway.bport);
-        std::cout << "listening on port " << gateway.bport << "for broadcast catch up." << std::endl;
+        std::cout << "listening on port " << gateway.bport << " for broadcast catch up..." << std::endl;
         bsrv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
             gateway.HandleCatchup(key, lbas);
         });
@@ -233,47 +237,4 @@ int main(int argc, char** argv) {
     catchup_thread.join();
     return 0;
 }
-
-
-// int main() {
-    
-//     std::thread read_thread([]() {
-//         rpc::server rsrv(5555);
-//         rsrv.bind("HandleRead", [](std::string buffer) {
-// 		ProcessGetRequest(buffer);
-// 	});
-//         rsrv.run();
-//     });
-
-//     std::thread write_thread([]() {
-//         rpc::server rsrv(6666);
-//         rsrv.bind("HandleWrite", [](std::string buffer) {
-// 		ProcessPutRequest(buffer);
-// 	});
-//         rsrv.run();
-//     });
-
-//     std::thread del_thread([]() {
-//         rpc::server rsrv(7777);
-//         rsrv.bind("HandleDel", [](std::string buffer) {
-// 		ProcessDelRequest(buffer);
-// 	});
-//         rsrv.run();
-//     });
-
-//     std::thread catchup_thread([]() {
-//         rpc::server csrv(8888);
-//         csrv.bind("CatchupMeeple", []() {
-//         });
-//         csrv.run();
-//     });
-
-
-//     read_thread.join();
-//     write_thread.join();
-//     del_thread.join();
-//     catchup_thread.join();
-
-//     return 0;
-// }
-
+//usage: ./gateway <gateway_id(0-2)>
