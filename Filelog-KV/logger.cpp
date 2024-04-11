@@ -12,17 +12,16 @@ off_t Logger::Append(const LogEnt& logent) {
     if (bytes_written < 0) {
         perror("Write error");
         pthread_mutex_unlock(&_mutex);
-        return -1; // Return an error value
+        return -1;
     }
     off_t offset = lseek(_fd, bytes_written, SEEK_CUR); 
     if (offset < 0) {
         perror("Seek error");
-        // Handle seek error, possibly return an error code
         pthread_mutex_unlock(&_mutex);
-        return -1; // Return an error value
+        return -1; 
     }
-    std::cout << "Current write pointer: " << _cur_lba << std::endl;
     _cur_lba = offset;
+    std::cout << "Current write pointer: " << _cur_lba << std::endl;
     pthread_mutex_unlock(&_mutex);
     return offset;
 }
@@ -42,7 +41,7 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
         return {}; 
     }
     std::cout << "Read " << bytes_read << " bytes" << std::endl;
-    std::string value(buffer, bytes_read); // Use bytes_read to construct the string
+    std::string value(buffer, bytes_read); 
     std::cout << "Read value: " << value << std::endl;
     ReadReply reply = {request.key, value};
     return reply;
@@ -51,7 +50,7 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
 int main(int argc, char** argv) {
     int8_t loggerID = atoi(argv[1]);//0-2
     Logger logger; 
-    logger._logger_id = loggerID; //dup this info to config file later
+    logger._logger_id = loggerID; // read this from config file later...
     logger.wport = 6000 + loggerID;
     logger.rport = 5000 + loggerID;
 
@@ -78,4 +77,3 @@ int main(int argc, char** argv) {
     read_thread.join();
     return 0;
 }
-//usage: ./logger <logger_id(0-2)>

@@ -62,34 +62,42 @@ int main() {
     // Read config.json file
     // Config conf = parseConfig("config.json");
 
-    // Split IP address and port number
-    // auto result = splitAddress(conf.gateways[ChooseRandGateway(0, conf.gateways.size() - 1)]);
-
     while (true) {
         std::getline(std::cin, command);
 
         if (!parseCommand(command, request)) {
             continue;
         }
-        //try this:
-        //choose a random gateway
-        int rand = random() % 3;
-        int gateway_cport = 6600 + rand;
-        rpc::client client("127.0.0.1", gateway_cport);
-        std::cout << "Connected to gateway "<< gateway_cport << std::endl;
-        switch(request.request_type) {
-            case 2:
-                reply = client.call("HandleWrite", request).as<std::string>();
-                std::cout << reply << std::endl;
+        int num_gateways = 3; // Assuming there are 3 gateways
+        int gateway_cport;
+
+        while (true) {
+            int rand = random() % num_gateways;
+            gateway_cport = 6600 + rand;
+            try {
+                // Attempt to connect to the gateway
+                rpc::client client("127.0.0.1", gateway_cport);
+                std::cout << "Connected to gateway " << gateway_cport << std::endl;
+                switch(request.request_type) {
+                    case 2:
+                        reply = client.call("HandleWrite", request).as<std::string>();
+                        std::cout << reply << std::endl;
+                        break;
+                    case 1:
+                        reply = client.call("HandleRead", request).as<std::string>();
+                        std::cout << "Read value: " << reply << std::endl;
+                        break;
+                    default:
+                        break;
+                }
                 break;
-            case 1:
-                reply = client.call("HandleRead", request).as<std::string>();
-                std::cout << "Read value: " << reply << std::endl;
-                break;
-            default:
-                break;
+            } catch (const std::exception& e) {
+                // If connection fails, print error message and try the next gateway
+                std::cerr << "Error: " << e.what() << std::endl;
+                std::cout << "Failed to connect to gateway " << gateway_cport << ". Trying next gateway..." << std::endl;
+                continue;
+            }
         }
     } 
-
     return 0;
 }
