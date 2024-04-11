@@ -65,9 +65,10 @@ struct ReplicationRequest
 	LBAs lbas;
 };
 
-struct ReplicationResp 
+struct PUTResp 
 {
 	bool success;
+	MSGPACK_DEFINE(success);	
 };
 
 struct CatchupRequest
@@ -100,7 +101,6 @@ struct ConnHeader
 struct header_t {
 	key_t key;
 	ssize_t length;
-	// char padding[BLOCK_SIZE-sizeof(key_t)-sizeof(ssize_t)] = {0};
 };
 
 struct LogEnt {

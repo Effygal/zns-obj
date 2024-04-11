@@ -3,7 +3,7 @@
     ------------------------------------
     Added stuff
 */
-void Gateway::HandleWrite(KVRequest command) {
+std::string Gateway::HandleWrite(KVRequest command) {
     // for each logger in known_loggers
     std::cout << "Handling write" << std::endl;
     std::cout << "Key: " << command.key << std::endl;
@@ -32,10 +32,10 @@ void Gateway::HandleWrite(KVRequest command) {
         std::cout << "LBA " << i << ": " << lbas.lbas[i] << std::endl;
     }
     //TODO: Reply to the client
-    
+    return "Success";
 }
 
-void Gateway::HandleRead(KVRequest command) {
+std::string Gateway::HandleRead(KVRequest command) {
     // assume no failure, read from arbitrary logger
     int random = rand() % known_loggers.size();
     logger logger = known_loggers[random];
@@ -48,6 +48,7 @@ void Gateway::HandleRead(KVRequest command) {
         std::string msg = read_reply.value;
         std::cout << "Read value: " << msg << std::endl;
         //TODO: Reply to the client
+        return msg;
 }
 
 void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
@@ -88,12 +89,14 @@ int main(int argc, char** argv) {
     std::thread server_thread([&gateway]() {
         rpc::server srv(gateway.cport); // Use the same port for all services
         std::cout << "listening on port " << gateway.cport << " for serveice..." << std::endl;
-        srv.bind("HandleRead", [&gateway](KVRequest command) {
-            gateway.HandleRead(command);
+        srv.bind("HandleRead", [&gateway](KVRequest command) -> std::string{
+            std::string reply = gateway.HandleRead(command);
+            return reply;
         });
 
-        srv.bind("HandleWrite", [&gateway](KVRequest command) {
-            gateway.HandleWrite(command);
+        srv.bind("HandleWrite", [&gateway](KVRequest command) -> std::string{
+            std::string reply = gateway.HandleWrite(command);
+            return reply;
         });
 
         srv.run();

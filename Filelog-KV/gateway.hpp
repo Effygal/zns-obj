@@ -41,8 +41,8 @@ public:
         K_LBAs.clear();
         pthread_mutex_destroy(&_mutex);
     };
-    void HandleRead(KVRequest command);
-    void HandleWrite(KVRequest  command);
+    std::string HandleRead(KVRequest command);
+    std::string HandleWrite(KVRequest  command);
     void HandleBroadcast(key_t key, LBAs lbas);
     void HandleCatchup(key_t key, LBAs lbas);
 
@@ -51,32 +51,5 @@ public:
     int bport;
     int cport;
 };
-
-
-// Function to serialize cmd struct into a byte buffer
-void SerializeCMDRequest(const cmd& request, char* buffer, size_t bufferSize);
-
-// Function to convert std::string to byte buffer
-void stringToBuffer(const std::string& serializedData, char* buffer, size_t bufferSize);
-// Function to convert byte buffer to std::string
-std::string bufferToString(const char* buffer, size_t bufferSize);
-
-// Function to deserialize byte buffer into KVRequest struct
-void DeserializeKVRequest(const char* buffer, size_t bufferSize, KVRequest& request);
-
-// Process different types of requests
-// void ProcessGetRequest(const std::string& serializedData);
-//void ProcessPutRequest(const std::string& serializedData);
-// void ProcessDelRequest(const std::string& serializedData);
-void ProcessRequest(const std::string& serializedData, Config conf);
-
-// Translate KV request to cmd
-void TranslateKVReq(KVRequest request, cmd& cmnd);
-
-// Chosse a random logger
-int ChooseRandLogger(int min, int max);
-
-// Make a tuple of IP address and ports
-std::tuple<std::string, int, int> parseAddress(const std::string& addressStr);
 
 #endif // GATEWAY_H

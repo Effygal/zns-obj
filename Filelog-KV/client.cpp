@@ -54,7 +54,7 @@ int main() {
 
     std::string command;
     KVRequest request;
-
+    std::string reply;
     // Read config.json file
     // Config conf = parseConfig("config.json");
 
@@ -79,12 +79,12 @@ int main() {
         std::cout << "Connected to gateway "<< gateway_cport << std::endl;
         switch(request.request_type) {
             case 2:
-                std::cout << "PUT" << request.key << request.value << std::endl;
-                client.call("HandleWrite", request);
+                reply = client.call("HandleWrite", request).as<std::string>();
+                std::cout << reply << std::endl;
                 break;
             case 1:
-                std::cout << "GET" << request.key << std::endl;
-                client.call("HandleRead", request);
+                reply = client.call("HandleRead", request).as<std::string>();
+                std::cout << "Read value: " << reply << std::endl;
                 break;
             default:
                 break;
