@@ -1,8 +1,12 @@
-#include "gateway.hpp"
 /*
     ------------------------------------
-    Added stuff
+    Gateways
+    ------------------------------------
+    Usage: ./gateway <gateway_id(0-2)>
 */
+
+#include "gateway.hpp"
+
 std::string Gateway::HandleWrite(KVRequest command) {
     // for each logger in known_loggers
     std::cout << "Handling write" << std::endl;
@@ -114,4 +118,3 @@ int main(int argc, char** argv) {
     catchup_thread.join();
     return 0;
 }
-//usage: ./gateway <gateway_id(0-2)>

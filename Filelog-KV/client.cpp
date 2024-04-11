@@ -1,3 +1,12 @@
+/*
+    ------------------------------------
+    Client.cpp
+    ------------------------------------
+    Usage: ./client
+    PUT <key> <value>
+    GET <key>
+*/
+
 #include "client.hpp"
 #include "read_config.hpp"
 
@@ -5,7 +14,6 @@ bool parseCommand(const std::string& command, KVRequest& request) {
     std::istringstream iss(command);
     std::string token;
 
-    // Parse request type
     if (!(iss >> token)) {
         std::cerr << "Error: Missing request type." << std::endl;
         return false;
@@ -21,14 +29,12 @@ bool parseCommand(const std::string& command, KVRequest& request) {
         return false;
     }
 
-    // Parse key
     if (!(iss >> token)) {
         std::cerr << "Error: Missing key." << std::endl;
         return false;
     }
     request.key = std::stoi(token);
 
-    // Parse value for PUT command
     if (request.request_type == 2) {
         if (!(iss >> token)) {
             std::cerr << "Error: Missing value for PUT command." << std::endl;
@@ -41,7 +47,6 @@ bool parseCommand(const std::string& command, KVRequest& request) {
         memcpy(request.value, token.c_str(), token.size() + 1); // +1 to include null terminator
     }
 
-    // Check if there are any extra tokens
     if (iss >> token) {
         std::cerr << "Error: Unexpected token '" << token << "'." << std::endl;
         return false;
@@ -51,7 +56,6 @@ bool parseCommand(const std::string& command, KVRequest& request) {
 }
 
 int main() {
-
     std::string command;
     KVRequest request;
     std::string reply;
@@ -62,15 +66,11 @@ int main() {
     // auto result = splitAddress(conf.gateways[ChooseRandGateway(0, conf.gateways.size() - 1)]);
 
     while (true) {
-        // Get user input for command
         std::getline(std::cin, command);
 
-        // Parse command and extract request type, key, and value
         if (!parseCommand(command, request)) {
-            continue; // Ask for input again if parsing fails
+            continue;
         }
-        // Send the request to the gateway
-        // send_request_to_gateway(request, result.first, result.second);
         //try this:
         //choose a random gateway
         int rand = random() % 3;
@@ -93,5 +93,3 @@ int main() {
 
     return 0;
 }
-
-//usage: ./client

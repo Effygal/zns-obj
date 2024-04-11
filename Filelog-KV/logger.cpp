@@ -1,3 +1,9 @@
+/*
+    ------------------------------------
+    Loggers
+    ------------------------------------
+    Usage: ./logger <logger_id(0-2)>
+*/
 #include "logger.hpp"
 
 off_t Logger::Append(const LogEnt& logent) {
@@ -15,24 +21,20 @@ off_t Logger::Append(const LogEnt& logent) {
         pthread_mutex_unlock(&_mutex);
         return -1; // Return an error value
     }
-    std::cout << "Wrote " << bytes_written << " bytes to fd: "<< _fd << std::endl;
+    std::cout << "Current write pointer: " << _cur_lba << std::endl;
     _cur_lba = offset;
     pthread_mutex_unlock(&_mutex);
     return offset;
 }
 
 AppendReply Logger::AppendThread(cmd& request) {
-    std::cout << "Received Append request "<< request.key << request.value << std::endl;
-
     LogEnt logent(request.key, request.value);
     off_t lba = Append(logent);
-    std::cout << "logEnt size: "<< sizeof(LogEnt) << std::endl;
     AppendReply reply = {_logger_id, request.key, lba};
     return reply;
 }
 
 ReadReply Logger::ReadThread(cmd& request, off_t lba) {
-    std::cout << "Received Read request " << request.key << " at lba: " << lba-BLOCK_SIZE << std::endl;
     char buffer[BLOCK_SIZE];
     ssize_t bytes_read = pread(_fd, buffer, sizeof(buffer), lba - BLOCK_SIZE);
     if (bytes_read < 0) {
