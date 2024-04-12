@@ -30,12 +30,13 @@ class Gateway {
 private:
     std::map<key_t, LBAs> K_LBAs;
     pthread_mutex_t _mutex;
+    std::vector<gw> failed_peers;
 public:
     Gateway(){
         pthread_mutex_init(&_mutex, NULL);
         K_LBAs[0] = LBAs{{0,0,0}};
         K_LBAs[1] = LBAs{{0,0,0}};
-        K_LBAs[2] = LBAs{{0,0,0}};
+        K_LBAs[2] = LBAs{{0,0,0}};//need fix
     };
     ~Gateway(){
         K_LBAs.clear();
@@ -45,7 +46,7 @@ public:
     std::string HandleWrite(KVRequest  command);
     void HandleBroadcast(key_t key, LBAs lbas);
     void HandleCatchup(key_t key, LBAs lbas);
-
+    void HandleRecovery();
     std::vector<logger> known_loggers;
     std::vector<gw> known_peers;
     int bport;

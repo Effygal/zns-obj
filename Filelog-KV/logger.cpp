@@ -42,7 +42,6 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
     }
     std::cout << "Read " << bytes_read << " bytes" << std::endl;
     std::string value(buffer, bytes_read); 
-    std::cout << "Read value: " << value << std::endl;
     ReadReply reply = {request.key, value};
     return reply;
 }
@@ -57,7 +56,6 @@ int main(int argc, char** argv) {
     std::thread append_thread([&logger]() { 
         rpc::server asrv(logger.wport);
         asrv.bind("Append", [&logger](cmd request) -> AppendReply {
-            std::cout << "Received Append request "<< request.key << request.value << std::endl;
             AppendReply reply = logger.AppendThread(request);
             return reply;//client on gateway get this reply
         });

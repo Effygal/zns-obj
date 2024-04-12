@@ -3,15 +3,18 @@
     Gateways
     ------------------------------------
     Usage: ./gateway <gateway_id(0-2)>
+    ------------------------------------
+    Loggers are supposed to not fail because they are persistent storage.
 */
 
 #include "gateway.hpp"
+#include <mutex>
+#include <condition_variable>
+
+std::mutex mtx;
+std::condition_variable cv;
 
 std::string Gateway::HandleWrite(KVRequest command) {
-    std::cout << "Handling write" << std::endl;
-    std::cout << "Key: " << command.key << std::endl;
-    std::cout << "Value: " << command.value << std::endl;
-    
     LBAs lbas;
     cmd cmnd;
     cmnd.op = 2;
@@ -25,7 +28,6 @@ std::string Gateway::HandleWrite(KVRequest command) {
             rpc::client ac(logger.ip, logger.wport);
             auto reply = ac.call("Append", cmnd);
             AppendReply append_reply = reply.as<AppendReply>();
-            std::cout << "Got reply: " << append_reply._logger_id << " " << append_reply.lba << std::endl;
             
             lbas.lbas[append_reply._logger_id] = append_reply.lba;
         } catch (const std::exception& e) {
@@ -85,15 +87,33 @@ std::string Gateway::HandleRead(KVRequest command) {
 }
 
 
+// void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
+//     for (auto peer : known_peers) {
+//         try {
+//             rpc::client bc(peer.ip, peer.bport);
+//             bc.call("HandleCatchup", key, lbas); 
+//         } catch (const std::exception& e) {
+//             std::cerr << "Error: " << e.what() << std::endl;
+//             std::cout << "Failed to broadcast to peer: " << peer.ip <<" "<< peer.bport << std::endl;
+//             failed_peers.push_back(peer);
+//             continue;
+//         }
+//     }
+// }
 void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
     for (auto peer : known_peers) {
-        std::cout << "Broadcasting to peer: " << peer.ip << peer.bport << std::endl;
         try {
             rpc::client bc(peer.ip, peer.bport);
             bc.call("HandleCatchup", key, lbas); 
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             std::cout << "Failed to broadcast to peer: " << peer.ip <<" "<< peer.bport << std::endl;
+            // Add the failed peer to the failed_peers vector
+            {
+                std::unique_lock<std::mutex> lock(mtx);
+                failed_peers.push_back(peer);
+            } 
+            cv.notify_one();
             continue;
         }
     }
@@ -110,6 +130,52 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
     pthread_mutex_unlock(&_mutex);
     }
 }
+
+//Lazy recovery
+// void Gateway::HandleRecovery() {
+//     while (failed_peers.size() > 0){
+//         pthread_mutex_lock(&_mutex);
+//         for (auto peer : failed_peers) {
+//             std::cout << "Recovering peer: " << peer.ip << peer.bport << std::endl;
+//                 try {
+//                     rpc::client rc(peer.ip, peer.bport);
+//                     for (auto entry : K_LBAs) {
+//                         rc.call("HandleCatchup", entry.first, entry.second);
+//                     }
+//                     failed_peers.erase(std::remove(failed_peers.begin(), failed_peers.end(), peer), failed_peers.end());
+//                 } catch (const std::exception& e) {
+//                     continue;
+//                 }
+//         }
+//         pthread_mutex_unlock(&_mutex);
+//     }
+// }
+void Gateway::HandleRecovery() {
+    while (true) {
+        std::unique_lock<std::mutex> lock(mtx);
+        // Wait until there are failed peers to recover
+        cv.wait(lock, [this]() { return !failed_peers.empty(); });
+
+        for (auto it = failed_peers.begin(); it != failed_peers.end();) {
+            auto peer = *it;
+
+            std::cout << "Recovering peer: " << peer.ip << peer.bport << std::endl;
+            try {
+                rpc::client rc(peer.ip, peer.bport);
+                for (auto entry : K_LBAs) {
+                    rc.call("HandleCatchup", entry.first, entry.second);
+                }
+                it = failed_peers.erase(it); // Erase the recovered peer
+            } catch (const std::exception& e) {
+                ++it; // Move to the next failed peer
+                continue;
+            }
+
+        }
+
+    }
+}
+
 
 int main(int argc, char** argv) {
     int gatewayID = atoi(argv[1]);//0-2
@@ -148,9 +214,16 @@ int main(int argc, char** argv) {
         bsrv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
             gateway.HandleCatchup(key, lbas);
         });
+        
         bsrv.run();
     });
+
+    std::thread recovery_thread([&gateway]() {
+        gateway.HandleRecovery();
+    });
+
     server_thread.join();
     catchup_thread.join();
+    recovery_thread.join();
     return 0;
 }
