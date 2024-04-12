@@ -1,15 +1,12 @@
 # Compiler and flags
 CXX := g++
 CFLAGS := -std=c++17
-LFLAGS := -lpthread
+LFLAGS := -lrpc -lpthread
 
 # Directories
-RPCLIB_DIR := rpc
-RPDJSON_DIR := rapidjson
+RPCLIB_DIR := /usr/local/include/
+RPDJSON_DIR := rapidjson/
 INC_DIR := -I$(RPCLIB_DIR) -I$(RPDJSON_DIR)
-
-# Library directory
-LIB_DIR := rpc
 
 # Targets
 TARGETS := client gateway logger 
