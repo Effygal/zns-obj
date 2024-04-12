@@ -40,7 +40,6 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
         perror("Read error");
         return {}; 
     }
-    std::cout << "Read " << bytes_read << " bytes" << std::endl;
     std::string value(buffer, bytes_read); 
     ReadReply reply = {request.key, value};
     return reply;

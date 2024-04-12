@@ -50,7 +50,6 @@ std::string Gateway::HandleWrite(KVRequest command) {
     return "Success";
 }
 
-
 std::string Gateway::HandleRead(KVRequest command) {
     std::string msg;
     bool valid_reply_found = false;
@@ -80,26 +79,11 @@ std::string Gateway::HandleRead(KVRequest command) {
 
     if (!valid_reply_found) {
         std::cerr << "Failed to read from any logger" << std::endl;
-        // Handle the case where no valid reply was found
     }
 
     return msg;
 }
 
-
-// void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
-//     for (auto peer : known_peers) {
-//         try {
-//             rpc::client bc(peer.ip, peer.bport);
-//             bc.call("HandleCatchup", key, lbas); 
-//         } catch (const std::exception& e) {
-//             std::cerr << "Error: " << e.what() << std::endl;
-//             std::cout << "Failed to broadcast to peer: " << peer.ip <<" "<< peer.bport << std::endl;
-//             failed_peers.push_back(peer);
-//             continue;
-//         }
-//     }
-// }
 void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
     for (auto peer : known_peers) {
         try {
@@ -108,7 +92,6 @@ void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             std::cout << "Failed to broadcast to peer: " << peer.ip <<" "<< peer.bport << std::endl;
-            // Add the failed peer to the failed_peers vector
             {
                 std::unique_lock<std::mutex> lock(mtx);
                 failed_peers.push_back(peer);
@@ -132,42 +115,21 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
 }
 
 //Lazy recovery
-// void Gateway::HandleRecovery() {
-//     while (failed_peers.size() > 0){
-//         pthread_mutex_lock(&_mutex);
-//         for (auto peer : failed_peers) {
-//             std::cout << "Recovering peer: " << peer.ip << peer.bport << std::endl;
-//                 try {
-//                     rpc::client rc(peer.ip, peer.bport);
-//                     for (auto entry : K_LBAs) {
-//                         rc.call("HandleCatchup", entry.first, entry.second);
-//                     }
-//                     failed_peers.erase(std::remove(failed_peers.begin(), failed_peers.end(), peer), failed_peers.end());
-//                 } catch (const std::exception& e) {
-//                     continue;
-//                 }
-//         }
-//         pthread_mutex_unlock(&_mutex);
-//     }
-// }
 void Gateway::HandleRecovery() {
     while (true) {
         std::unique_lock<std::mutex> lock(mtx);
-        // Wait until there are failed peers to recover
         cv.wait(lock, [this]() { return !failed_peers.empty(); });
 
         for (auto it = failed_peers.begin(); it != failed_peers.end();) {
             auto peer = *it;
-
-            std::cout << "Recovering peer: " << peer.ip << peer.bport << std::endl;
             try {
                 rpc::client rc(peer.ip, peer.bport);
                 for (auto entry : K_LBAs) {
                     rc.call("HandleCatchup", entry.first, entry.second);
                 }
-                it = failed_peers.erase(it); // Erase the recovered peer
+                it = failed_peers.erase(it); 
             } catch (const std::exception& e) {
-                ++it; // Move to the next failed peer
+                ++it; 
                 continue;
             }
 
@@ -194,7 +156,7 @@ int main(int argc, char** argv) {
 
     std::thread server_thread([&gateway]() {
         rpc::server srv(gateway.cport); // Use the same port for all services
-        std::cout << "listening on port " << gateway.cport << " for serveice..." << std::endl;
+        std::cout << "listening on port " << gateway.cport << " for service..." << std::endl;
         srv.bind("HandleRead", [&gateway](KVRequest command) -> std::string{
             std::string reply = gateway.HandleRead(command);
             return reply;
