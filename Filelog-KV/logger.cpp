@@ -2,7 +2,7 @@
     ------------------------------------
     Loggers
     ------------------------------------
-    Usage: ./logger <logger_id(0-2)>
+    Usage: ./logger <logger_id>
 */
 #include "logger.hpp"
 

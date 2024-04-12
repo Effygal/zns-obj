@@ -2,9 +2,7 @@
     ------------------------------------
     Gateways
     ------------------------------------
-    Usage: ./gateway <gateway_id(0-2)>
-    ------------------------------------
-    Loggers are supposed to not fail because they are persistent storage.
+    Usage: ./gateway <gateway_id>
 */
 
 #include "gateway.hpp"
@@ -142,11 +140,10 @@ void Gateway::HandleRecovery() {
 int main(int argc, char** argv) {
 
     if (argc < 2 ) {
-        std::cerr << "Usage: ./gateway <gateway_id(0-2)>" << std::endl;
+        std::cerr << "Usage: ./gateway <gateway_id>" << std::endl;
         return 1;
     }
 
-    // Read config.json file
     Config conf = parseConfig("config.json");
 
     int gatewayID = atoi(argv[1]);//0-2
