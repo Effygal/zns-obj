@@ -10,6 +10,7 @@
 #include "rpc/server.h"
 #include "rpc/client.h"
 #include <fcntl.h> 
+#include "read_config.hpp"
 
 class Logger {
 public:

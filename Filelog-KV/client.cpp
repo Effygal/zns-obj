@@ -18,11 +18,11 @@ bool parseCommand(const std::string& command, KVRequest& request) {
         std::cerr << "Error: Missing request type." << std::endl;
         return false;
     }
-    if (token == "PUT") {
+    if (token == "put" || token == "PUT") {
         request.request_type = 2;
-    } else if (token == "GET") {
+    } else if (token == "get" || token == "GET") {
         request.request_type = 1;
-    } else if (token == "DEL") {
+    } else if (token == "del" || token == "DEL") {
         request.request_type = 3;
     } else {
         std::cerr << "Error: Invalid request type." << std::endl;
@@ -60,7 +60,7 @@ int main() {
     KVRequest request;
     std::string reply;
     // Read config.json file
-    // Config conf = parseConfig("config.json");
+    Config conf = parseConfig("config.json");
 
     while (true) {
         std::getline(std::cin, command);
@@ -68,15 +68,20 @@ int main() {
         if (!parseCommand(command, request)) {
             continue;
         }
-        int num_gateways = 3; // Assuming there are 3 gateways
+        int num_gateways = conf.gateways.size(); // how many gateways?
+        std::string gateway_ip;
         int gateway_cport;
 
         while (true) {
             int rand = random() % num_gateways;
-            gateway_cport = 6600 + rand;
+            auto result = parseAddress(conf.gateways[rand]);
+            // Access elements of the returned tuple
+            gateway_ip = std::get<0>(result);
+            gateway_cport = std::get<2>(result);
+
             try {
                 // Attempt to connect to the gateway
-                rpc::client client("127.0.0.1", gateway_cport);
+                rpc::client client(gateway_ip, gateway_cport);
                 std::cout << "Connected to gateway " << gateway_cport << std::endl;
                 switch(request.request_type) {
                     case 2:

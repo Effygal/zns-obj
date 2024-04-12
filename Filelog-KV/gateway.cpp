@@ -140,18 +140,43 @@ void Gateway::HandleRecovery() {
 
 
 int main(int argc, char** argv) {
+
+    if (argc < 2 ) {
+        std::cerr << "Usage: ./gateway <gateway_id(0-2)>" << std::endl;
+        return 1;
+    }
+
+    // Read config.json file
+    Config conf = parseConfig("config.json");
+
     int gatewayID = atoi(argv[1]);//0-2
+    auto result = parseAddress(conf.gateways[gatewayID]);
     Gateway gateway;
-    gateway.bport = 5500 + gatewayID;
-    gateway.cport = 6600 + gatewayID;
-    // Load the configuration file later
-    int peer1ID = (gatewayID + 1) % 3;
-    int peer2ID = (gatewayID + 2) % 3;
-    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+peer1ID, 6600+peer1ID});
-    gateway.known_peers.push_back(gw{"127.0.0.1", 5500+peer2ID, 6600+peer2ID});
-    gateway.known_loggers.push_back(logger{"127.0.0.1", 5000, 6000});
-    gateway.known_loggers.push_back(logger{"127.0.0.1", 5001, 6001});
-    gateway.known_loggers.push_back(logger{"127.0.0.1", 5002, 6002});
+    gateway.ip = std::get<0>(result);
+    gateway.bport = std::get<1>(result);
+    gateway.cport = std::get<2>(result);;
+
+    for (size_t i = 0; i < conf.gateways.size(); ++i) {
+        // skip itself
+        if (i == gatewayID) continue;
+        auto gateway_info = parseAddress(conf.gateways[i]);
+        std::string gateway_ip = std::get<0>(gateway_info);
+        int gateway_bport = std::get<1>(gateway_info);
+        int gateway_cport = std::get<2>(gateway_info);
+        gateway.known_peers.push_back(gw{gateway_ip, gateway_bport, gateway_cport});
+    }
+
+
+    std::string logger_ip;
+    int logger_rport, logger_wport;
+    for (size_t i = 0; i < conf.loggers.size(); ++i) {
+        auto logger_info = parseAddress(conf.loggers[i]);
+        logger_ip = std::get<0>(logger_info);
+        logger_rport = std::get<1>(logger_info);
+        logger_wport = std::get<2>(logger_info);
+        gateway.known_loggers.push_back(logger{logger_ip, logger_rport, logger_wport});
+    }
+
     std::cout << "Gateway " << gatewayID << " started" << std::endl;
 
     std::thread server_thread([&gateway]() {

@@ -46,11 +46,21 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
 }
 
 int main(int argc, char** argv) {
+
+    if (argc < 2 ) {
+        std::cerr << "Usage: ./logger <logger_id(0-2)>" << std::endl;
+        return 1;
+    }
+
+    // Read config.json file
+    Config conf = parseConfig("config.json");
+    
     int8_t loggerID = atoi(argv[1]);//0-2
     Logger logger; 
     logger._logger_id = loggerID; // read this from config file later...
-    logger.wport = 6000 + loggerID;
-    logger.rport = 5000 + loggerID;
+    auto result = parseAddress(conf.loggers[logger._logger_id]);
+    logger.rport = std::get<1>(result);
+    logger.wport = std::get<2>(result);
 
     std::thread append_thread([&logger]() { 
         rpc::server asrv(logger.wport);
