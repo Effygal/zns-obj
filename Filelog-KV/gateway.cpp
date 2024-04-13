@@ -8,6 +8,8 @@
 #include "gateway.hpp"
 #include <mutex>
 #include <condition_variable>
+#include <fstream>
+#include <chrono>
 
 std::mutex mtx;
 std::condition_variable cv;
@@ -107,10 +109,36 @@ void Gateway::HandleCatchup(key_t key, LBAs lbas) {
 }
 
 //Lazy recovery
+// void Gateway::HandleRecovery() {
+//     while (true) {
+//         std::unique_lock<std::mutex> lock(mtx);
+//         cv.wait(lock, [this]() { return !failed_peers.empty(); });
+
+//         for (auto it = failed_peers.begin(); it != failed_peers.end();) {
+//             auto peer = *it;
+//             try {
+//                 rpc::client rc(peer.ip, peer.bport);
+//                 for (auto entry : K_LBAs) {
+//                     rc.call("HandleCatchup", entry.first, entry.second);
+//                 }
+//                 it = failed_peers.erase(it); 
+//             } catch (const std::exception& e) {
+//                 ++it; 
+//                 continue;
+//             }
+
+//         }
+
+//     }
+// }
+//For measurement:
 void Gateway::HandleRecovery() {
     while (true) {
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [this]() { return !failed_peers.empty(); });
+
+        // Record the start time of the recovery process
+        auto start = std::chrono::steady_clock::now();
 
         for (auto it = failed_peers.begin(); it != failed_peers.end();) {
             auto peer = *it;
@@ -124,9 +152,19 @@ void Gateway::HandleRecovery() {
                 ++it; 
                 continue;
             }
-
         }
+        // Record the end time of the recovery process
+        auto end = std::chrono::steady_clock::now();
 
+        // Calculate the duration of the recovery process
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        // Write the recovery duration to the file
+        std::ofstream file("statistics/recovery_time.txt", std::ios::app);
+        if (file.is_open()) {
+            file << "Recovery Duration: " << duration.count() << " milliseconds" << std::endl;
+            file.close();
+        }
     }
 }
 

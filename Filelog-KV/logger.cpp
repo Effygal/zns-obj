@@ -21,7 +21,7 @@ off_t Logger::Append(const LogEnt& logent) {
         return -1; 
     }
     _cur_lba = offset;
-    std::cout << "Current write pointer: " << _cur_lba << std::endl;
+    // std::cout << "Current write pointer: " << _cur_lba << std::endl;
     pthread_mutex_unlock(&_mutex);
     return offset;
 }

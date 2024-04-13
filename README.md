@@ -137,8 +137,7 @@ int main() {
 ```
 
 # Status
-* Currently only accept PUT and GET requests;
-* 
+* Currently accepts PUT, GET and DEL requests;
 * Failure tolerant as long as at least one gateway and one logger alive;
 * Scalable for both the gateways, loggers and the clients;
 * Failure detection only be triggered when received PUT request;
