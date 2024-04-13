@@ -1,0 +1,2 @@
+Average Latency: 0.51 milliseconds
+Average Latency: 0.45 milliseconds
