@@ -118,7 +118,6 @@ Loggers are assumed to never fail (although we implemented failure handle for lo
 ## Client
 
 ```cpp
-#include <iostream>
 #include "rpc/client.h"
 
 int main() {
@@ -138,13 +137,17 @@ int main() {
 ```
 
 # Status
+* Currently only accept PUT and GET requests;
+* 
 * Failure tolerant as long as at least one gateway and one logger alive;
 * Scalable for both the gateways, loggers and the clients;
+* Failure detection only be triggered when received PUT request;
 * In scenarios where only one gateway server is alive, and fails immediately after previously failed peers come back online, recovery cannot be assured. Consequently, the gateway server returning online may not undergo complete recovery, resulting in data loss;
-* An aggressive recovery implementation without implementing checkpoints, resulting in linear asymptotic cost.
+* Since the failed peers list isn't replicated, in scenarios where the one gateway server who acquired lock to handle the recovery (considered as recovery manager) fails before completing the recovery for the entire list of peers, the recovery process would be incomplete, potentially leading to data loss if everyone fails in the future except the gateway that was not fully recovered;
+* Use an aggressive recovery implementation without implementing checkpoints, resulting in linear asymptotic cost.
 
 # Dependencies
 
 `kv-filelog` builds on the efforts of below projects and libs. In no particular order:
-  * [rpclib](https://github.com/rpclib/rpclib)([website](http://rpclib.net/))
+  * [rpclib implementation for C++](https://github.com/rpclib/rpclib)([website](http://rpclib.net/))
    * [MessagePack implementation for C and C++](https://github.com/msgpack/msgpack-c) by Takatoshi Kondo ([website](http://msgpack.org/))

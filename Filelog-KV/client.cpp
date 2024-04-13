@@ -81,6 +81,7 @@ void sendRequest(std::string command, Config& conf) {
             std::cout << "Connected to gateway " << gateway_cport << std::endl;
             switch(request.request_type) {
                 case 2:
+                case 3:
                     reply = client.call("HandleWrite", request).as<std::string>();
                     std::cout << reply << std::endl;
                     break;
