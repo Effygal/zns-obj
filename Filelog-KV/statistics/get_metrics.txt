@@ -1,17 +1,3 @@
-3 gateways & 1 client:
-trace1:
-Average Latency: 2.2037 milliseconds
-Throughput: 453.782 requests/second
-P99 Latency: 8 milliseconds
-Average Latency: 2.16667 milliseconds
-Throughput: 461.538 requests/second
-P99 Latency: 8 milliseconds
-Average Latency: 2.69565 milliseconds
-Throughput: 370.968 requests/second
-P99 Latency: 6 milliseconds
-Average Latency: 2.5 milliseconds
-Throughput: 400 requests/second
-P99 Latency: 5 milliseconds
 
 4 gateways & 1 client:
 
@@ -39,20 +25,6 @@ P99 Latency: 7 milliseconds
 Average Latency: 2.37037 milliseconds
 Throughput: 421.875 requests/second
 P99 Latency: 6 milliseconds
-
-4 gateways & 2 client:
-Average Latency: 2.66667 milliseconds
-Throughput: 375 requests/second
-P99 Latency: 10 milliseconds
-Average Latency: 2.73913 milliseconds
-Throughput: 365.079 requests/second
-P99 Latency: 5 milliseconds
-Average Latency: 2.7963 milliseconds
-Throughput: 357.616 requests/second
-P99 Latency: 9 milliseconds
-Average Latency: 2.73913 milliseconds
-Throughput: 365.079 requests/second
-P99 Latency: 5 milliseconds
 
 5 gateways:
 Average Latency: 3.23913 milliseconds
@@ -103,3 +75,69 @@ P99 Latency: 7 milliseconds
 Average Latency: 2.7037 milliseconds
 Throughput: 369.863 requests/second
 P99 Latency: 8 milliseconds
+
+3 gateways & 1 client:
+Average Latency: 2.2037 milliseconds
+Throughput: 453.782 requests/second
+P99 Latency: 8 milliseconds
+Average Latency: 2.16667 milliseconds
+Throughput: 461.538 requests/second
+P99 Latency: 8 milliseconds
+Average Latency: 2.69565 milliseconds
+Throughput: 370.968 requests/second
+P99 Latency: 6 milliseconds
+Average Latency: 2.5 milliseconds
+Throughput: 400 requests/second
+P99 Latency: 5 milliseconds
+Average Latency: 3.46296 milliseconds
+Throughput: 288.77 requests/second
+P99 Latency: 15 milliseconds
+Average Latency: 3.43478 milliseconds
+Throughput: 291.139 requests/second
+P99 Latency: 6 milliseconds
+Average Latency: 3.13043 milliseconds
+Throughput: 319.444 requests/second
+P99 Latency: 6 milliseconds
+Average Latency: 2.88889 milliseconds
+Throughput: 346.154 requests/second
+P99 Latency: 7 milliseconds
+
+2 gateways:
+Average Latency: 2.04348 milliseconds
+Throughput: 489.362 requests/second
+P99 Latency: 3 milliseconds
+Average Latency: 1.91304 milliseconds
+Throughput: 522.727 requests/second
+P99 Latency: 3 milliseconds
+Average Latency: 2 milliseconds
+Throughput: 500 requests/second
+P99 Latency: 4 milliseconds
+Average Latency: 1.83333 milliseconds
+Throughput: 545.455 requests/second
+P99 Latency: 4 milliseconds
+Average Latency: 1.90741 milliseconds
+Throughput: 524.272 requests/second
+P99 Latency: 5 milliseconds
+Average Latency: 1.81481 milliseconds
+Throughput: 551.02 requests/second
+P99 Latency: 4 milliseconds
+
+1 gateways:
+Average Latency: 1.77778 milliseconds
+Throughput: 562.5 requests/second
+P99 Latency: 7 milliseconds
+Average Latency: 1.5 milliseconds
+Throughput: 666.667 requests/second
+P99 Latency: 4 milliseconds
+Average Latency: 1.48148 milliseconds
+Throughput: 675 requests/second
+P99 Latency: 4 milliseconds
+Average Latency: 1.52174 milliseconds
+Throughput: 657.143 requests/second
+P99 Latency: 2 milliseconds
+Average Latency: 1.6087 milliseconds
+Throughput: 621.622 requests/second
+P99 Latency: 4 milliseconds
+Average Latency: 1.52174 milliseconds
+Throughput: 657.143 requests/second
+P99 Latency: 2 milliseconds
