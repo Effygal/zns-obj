@@ -143,7 +143,6 @@ int main() {
 * In scenarios where only one gateway server is alive, and fails immediately after previously failed peers come back online, recovery cannot be assured. Consequently, the gateway server returning online may not undergo complete recovery, resulting in data loss;
 * An aggressive recovery implementation without implementing checkpoints, resulting in linear asymptotic cost.
 
-
 # Dependencies
 
 `kv-filelog` builds on the efforts of below projects and libs. In no particular order:

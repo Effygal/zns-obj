@@ -4,9 +4,10 @@ CFLAGS := -std=c++17 -static-libstdc++
 LFLAGS := -lpthread
 
 # Directories
+PROJ_DIR := .
 RPCLIB_DIR := rpc
 RPDJSON_DIR := rapidjson
-INC_DIR := -I$(RPCLIB_DIR) -I$(RPDJSON_DIR)
+INC_DIR := -I$(PROJ_DIR) -I$(RPCLIB_DIR) -I$(RPDJSON_DIR)
 
 # Library directory
 LIB_DIR := rpc
