@@ -20,8 +20,7 @@ std::string Gateway::HandleWrite(KVRequest command) {
     std::memcpy(cmnd.value, command.value, BLOCK_SIZE);
     
     for (auto logger : known_loggers) {
-        std::cout << "Sending to logger: " << logger.ip << logger.wport << std::endl;
-        
+        // std::cout << "Sending to logger: " << logger.ip << logger.wport << std::endl;
         try {
             rpc::client ac(logger.ip, logger.wport);
             auto reply = ac.call("Append", cmnd);
@@ -29,8 +28,8 @@ std::string Gateway::HandleWrite(KVRequest command) {
             
             lbas.lbas[append_reply._logger_id] = append_reply.lba;
         } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-            std::cout << "Failed to send to logger: " << logger.ip << logger.wport << std::endl;
+            // std::cerr << "Error: " << e.what() << std::endl;
+            // std::cout << "Failed to send to logger: " << logger.ip << logger.wport << std::endl;
             continue;
         }
     }
@@ -38,12 +37,12 @@ std::string Gateway::HandleWrite(KVRequest command) {
     K_LBAs[command.key] = lbas;
     HandleBroadcast(command.key, lbas);
     
-    std::cout << "Write successful" << std::endl;
-    std::cout << "Key: " << command.key << std::endl;
+    // std::cout << "Write successful" << std::endl;
+    // std::cout << "Key: " << command.key << std::endl;
     
-    for (int i = 0; i < 3; i++) {
-        std::cout << "LBA " << i << ": " << lbas.lbas[i] << std::endl;
-    }
+    // for (int i = 0; i < 3; i++) {
+    //     std::cout << "LBA " << i << ": " << lbas.lbas[i] << std::endl;
+    // }
     
     return "Success";
 }
@@ -65,12 +64,9 @@ std::string Gateway::HandleRead(KVRequest command) {
             reply = rc.call("Read", cmnd, K_LBAs[command.key].lbas[random]).as<ReadReply>();
             msg = reply.value;  
             valid_reply_found = true;  
-            std::cout << "Read value: " << msg << std::endl;
+            // std::cout << "Read value: " << msg << std::endl;
             break;
         } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-            std::cout << "Failed to read from logger: " << logger.ip << logger.rport << std::endl;
-            std::cout << "Trying next logger" << std::endl;
             continue;
         }
     }
@@ -88,13 +84,11 @@ void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
             rpc::client bc(peer.ip, peer.bport);
             bc.call("HandleCatchup", key, lbas); 
         } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-            std::cout << "Failed to broadcast to peer: " << peer.ip <<" "<< peer.bport << std::endl;
             {
                 std::unique_lock<std::mutex> lock(mtx);
                 failed_peers.push_back(peer);
             } 
-            cv.notify_one();
+            cv.notify_all();
             continue;
         }
     }
