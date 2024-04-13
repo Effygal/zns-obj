@@ -1,0 +1,4 @@
+
+Average Latency: 0.518519 milliseconds
+Throughput: 1928.57 requests/second
+P99 Latency: 4 milliseconds
