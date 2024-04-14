@@ -6,7 +6,9 @@
 
 ## Overview
 
-`kv-filelog` is a two-layer (gateway server and logger server) distributed KV storage system; build on top of conventional file system, with the underlying file on each logger serves as the log for KV storage; data stored in append manner, can utilizes the current LBA of the file as a weak version ID; providing both client, gateway server, and logger server implementations. It is built using modern C++17, and as such, requires a recent compiler.
+`kv-filelog` is a two-layer (gateway server and logger server) distributed KV storage system; build on top of conventional file system, with the underlying file on each logger serves as the log for KV storage; data stored in append manner; we utilizes the current LBA of the file as a weak version ID; providing both client, gateway server, and logger server implementations. It is built using modern C++17, and as such, requires a recent compiler.
+
+
 
 ## Look&feel
 
@@ -19,40 +21,34 @@
     ------------------------------------
     Usage: ./gateway <gateway_id>
 */
-
-int main() {
-
-    std::thread server_thread([&gateway]() {
-        rpc::server srv(gateway.cport); 
-        srv.bind("HandleRead", [&gateway](KVRequest command) -> std::string{
-            std::string reply = gateway.HandleRead(command);
-            return reply;
-        });
-
-        srv.bind("HandleWrite", [&gateway](KVRequest command) -> std::string{
-            std::string reply = gateway.HandleWrite(command);
-            return reply;
-        });
-        srv.run();
+...
+std::thread server_thread([&gateway]() {
+    rpc::server srv(gateway.cport); 
+    srv.bind("HandleRead", [&gateway](KVRequest command) -> std::string{
+        std::string reply = gateway.HandleRead(command);
+        return reply;
     });
 
-    std::thread catchup_thread([&gateway]() {
-        rpc::server bsrv(gateway.bport);
-        bsrv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
-            gateway.HandleCatchup(key, lbas);
-        });
-        bsrv.run();
+    srv.bind("HandleWrite", [&gateway](KVRequest command) -> std::string{
+        std::string reply = gateway.HandleWrite(command);
+        return reply;
     });
+    srv.run();
+});
 
-    std::thread recovery_thread([&gateway]() {
-        gateway.HandleRecovery();
+std::thread catchup_thread([&gateway]() {
+    rpc::server bsrv(gateway.bport);
+    bsrv.bind("HandleCatchup", [&gateway](key_t key, LBAs lbas) {
+        gateway.HandleCatchup(key, lbas);
     });
+    bsrv.run();
+});
 
-    server_thread.join();
-    catchup_thread.join();
-    recovery_thread.join();
-    return 0;
-}
+std::thread recovery_thread([&gateway]() {
+    gateway.HandleRecovery();
+});
+...
+
 ```
 The gateway servers act as intermediaries between the clients issuing KV requests and the loggers responsible for logging the KV store. When a client-selected gateway receives a KV request, it translates the request into Append commands and forwards them to all loggers. In the case of a write request, including overwrites, the gateway receives replies from all loggers containing the corresponding logical block addresses (LBAs) for the requested key, which only increase over time. It then broadcasts these LBAs to all other gateways, detecting failures in the process. For read requests, the gateway selects a random logger, sends the LBA for the requested key to the chosen logger, and retrieves the corresponding value.The recovery thread aggressively runs on an independent thread, constantly waiting for the failed peers list to become non-empty on a conditional variable. Once awakened, the awaked gateway responsible for recovering of the entire list of failed peers.
 
@@ -72,8 +68,7 @@ off_t Logger::Append(const LogEnt& logent) {
     ...
     off_t offset = lseek(_fd, bytes_written, SEEK_CUR); 
     ...
-    _cur_lba = offset;
-    std::cout << "Current write pointer: " << _cur_lba << std::endl;
+    _cur_lba = offset; /* emulate current write pointer of ZNSSD */
     ...
     return offset;
 }
@@ -86,45 +81,20 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
     return reply;
 }
 
-int main() {
-
-     std::thread append_thread([&logger]() { 
-        rpc::server asrv(logger.wport);
-        asrv.bind("Append", [&logger](cmd request) -> AppendReply {
-            AppendReply reply = logger.AppendThread(request);
-            return reply;//client on gateway get this reply
-        });
-        asrv.run();
-    });
-
-    std::thread read_thread([&logger]() {
-        rpc::server rsv(logger.rport);
-        rsv.bind("Read", [&logger](cmd request, off_t lba) -> ReadReply {
-            ReadReply reply = logger.ReadThread(request, lba);
-            return reply;
-        });
-        rsv.run();
-    });
-
-    append_thread.join();
-    read_thread.join();
-    return 0;
-}
 ```
-
-All loggers talks to all gateways for append request; the chosen logger talks to the gateway who made the choice for read request; the undelying implementation of append is in terms of pwrite and lseek; the underlying implementation of read is in pread; two services running on two threads.
+Loggers are assumed to never fail, because they emulate ZNSSDs for our purpose; 
+All loggers within the cluster talks to all gateways for append request; the chosen logger talks to the gateway who made the choice for read request; the undelying implementation of append is in terms of pwrite and lseek; the underlying implementation of read is in pread; two services running on two threads.
 Loggers are assumed to never fail (although we implemented failure handle for loggers as well), because they are pretending to be ZNSSDs, thus are persistent.
 
 ## Client
 
 ```cpp
 #include "rpc/client.h"
-
-int main() {
     ...
     rpc::client client(random_gateway_ip, random_gateway_cport);
     switch(request.request_type) {
         case PUT:
+        case DEL:
             reply = client.call("HandleWrite", request).as<std::string>();
             break;
         case GET:
@@ -132,8 +102,6 @@ int main() {
             break;
         ...
     }
-    return 0;
-}
 ```
 
 # Status
