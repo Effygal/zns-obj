@@ -5,10 +5,11 @@
     Usage: ./client <type>
     PUT <key> <value>
     GET <key>
+    DEL <key>
     ------------------------------------
-    Measurement of latency and throughput under type 1:
-    ./client 1 <trace_file>
-    Results are written to statistics/latency.txt and statistics/throughput.txt
+    Performance evaluation under batched requests:
+    ./client <num_gws> <trace_file>
+    Results are written to statistics/get_metrics_<num_gws>_gws.txt, statistics/put_metrics_<num_gws>.txt
 */
 #include <fstream>
 #include "client.hpp"
@@ -67,7 +68,7 @@ bool parseCommand(const std::string& command, KVRequest& request) {
     return true;
 }
 
-void sendRequest(std::string command, Config& conf, std::vector<RequestInfo>& putRequests, std::vector<RequestInfo>& getRequests) {
+void sendRequest(std::string command, Config& conf, std::vector<RequestInfo>& putRequests, std::vector<RequestInfo>& getRequests, bool isBatched = false) {
     using Clock = std::chrono::steady_clock;
     using TimePoint = std::chrono::time_point<Clock>;
 
@@ -101,14 +102,15 @@ void sendRequest(std::string command, Config& conf, std::vector<RequestInfo>& pu
                 case 1:
                     info.reply = client.call("HandleRead", request).as<std::string>();
                     getRequests.push_back(info);
-                    std::cout << "Reply: " << info.reply << std::endl;
                     break;
                 default:
                     break;
             }
-
             TimePoint end = Clock::now();
             info.latency = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            if (!isBatched) {
+                    std::cout << "Reply: " << info.reply << std::endl;
+                }
             break;
         } catch (const std::exception& e) {
             continue;
@@ -129,17 +131,17 @@ void writeMetrics(const std::vector<RequestInfo>& requests, const std::string& f
         latencies.push_back(info.latency.count());
     }
 
-    double averageLatency = totalRequests > 0 ? static_cast<double>(totalTime) / totalRequests : 0.0;
-    double throughput = totalRequests > 0 ? static_cast<double>(totalRequests) / totalTime * 1000.0 : 0.0;
+    long double averageLatency = totalRequests > 0 ? static_cast<long double>(totalTime) / totalRequests : 0.0;
+    long double throughput = totalRequests > 0 ? static_cast<long double>(totalRequests) / (totalTime * 1000.0) : 0.0;
 
-    file << "Average Latency: " << averageLatency << " milliseconds" << std::endl;
+    file << "Average Latency: " << averageLatency << " ms" << std::endl;
     file << "Throughput: " << throughput << " requests/second" << std::endl;
 
     // Calculate P99 latency
     std::sort(latencies.begin(), latencies.end());
     int p99Index = static_cast<int>(requests.size() * 0.99);
     int p99Latency = latencies[p99Index];
-    file << "P99 Latency: " << p99Latency << " milliseconds" << std::endl;
+    file << "P99 Latency: " << p99Latency << " ms" << std::endl;
 
     file.close();
 }
@@ -161,10 +163,10 @@ int main(int argc, char* argv[]) {
     if (request_type == 0) {
         while (true) {
             std::getline(std::cin, command);
-            sendRequest(command, conf, putRequests, getRequests);
+            sendRequest(command, conf, putRequests, getRequests, false);
         }
     }
-    else if (request_type == 1) {
+    else if (request_type >= 1) {
         std::string filePath = argv[2];
 
         // Open the file
@@ -175,15 +177,14 @@ int main(int argc, char* argv[]) {
         }
 
         while (std::getline(traceFile, command)) {
-            sendRequest(command, conf, putRequests, getRequests);
+            sendRequest(command, conf, putRequests, getRequests, true);
         }
 
         traceFile.close(); 
+        int userInt = atoi(argv[1]);
+        writeMetrics(putRequests, "statistics/put_metrics_" + std::to_string(userInt) + "_gws.txt");
+        writeMetrics(getRequests, "statistics/get_metrics_" + std::to_string(userInt) + "_gws.txt");
     }
-
-    // writeMetrics(putRequests, "statistics/put_metrics.txt");
-
-    // writeMetrics(getRequests, "statistics/get_metrics.txt");
 
     return 0;
 }
