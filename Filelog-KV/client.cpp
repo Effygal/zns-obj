@@ -46,7 +46,14 @@ bool parseCommand(const std::string& command, KVRequest& request) {
         std::cerr << "Error: Missing key." << std::endl;
         return false;
     }
-    request.key = std::stoi(token);
+
+    try {
+        request.key = std::stoi(token);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Error: Key must be an integer" << std::endl;
+        return false;
+    }
+    
 
     if (request.request_type == 2) {
         if (!(iss >> token)) {
