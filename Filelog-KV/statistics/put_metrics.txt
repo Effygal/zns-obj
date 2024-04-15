@@ -141,3 +141,5 @@ P99 Latency: 4 milliseconds
 Average Latency: 1.55556 milliseconds
 Throughput: 642.857 requests/second
 P99 Latency: 4 milliseconds
+
+Random:

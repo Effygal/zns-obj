@@ -101,6 +101,7 @@ void sendRequest(std::string command, Config& conf, std::vector<RequestInfo>& pu
                 case 1:
                     info.reply = client.call("HandleRead", request).as<std::string>();
                     getRequests.push_back(info);
+                    std::cout << "Reply: " << info.reply << std::endl;
                     break;
                 default:
                     break;
@@ -180,9 +181,9 @@ int main(int argc, char* argv[]) {
         traceFile.close(); 
     }
 
-    writeMetrics(putRequests, "statistics/put_metrics.txt");
+    // writeMetrics(putRequests, "statistics/put_metrics.txt");
 
-    writeMetrics(getRequests, "statistics/get_metrics.txt");
+    // writeMetrics(getRequests, "statistics/get_metrics.txt");
 
     return 0;
 }

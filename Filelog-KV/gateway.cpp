@@ -90,7 +90,7 @@ void Gateway::HandleBroadcast(key_t key, LBAs lbas) {
                 std::unique_lock<std::mutex> lock(mtx);
                 failed_peers.push_back(peer);
             } 
-            cv.notify_all();
+            cv.notify_all(); //currently only one thread is waiting so no difference
             continue;
         }
     }
