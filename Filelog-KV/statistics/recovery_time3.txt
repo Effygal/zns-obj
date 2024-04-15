@@ -23,3 +23,16 @@ Recovery Duration: 2 milliseconds
 Recovery Duration: 23 milliseconds
 Recovery Duration: 45 milliseconds
 Recovery Duration: 24 milliseconds
+Recovery Duration: 13 ms
+Recovery Duration: 9 ms
+Recovery Duration: 14 ms
+Recovery Duration: 1 ms
+Recovery Duration: 12 ms
+Recovery Duration: 13 ms
+Recovery Duration: 12 ms
+Recovery Duration: 10 ms
+Recovery Duration: 13 ms
+Recovery Duration: 12 ms
+Recovery Duration: 13 ms
+Recovery Duration: 14 ms
+Recovery Duration: 11 ms

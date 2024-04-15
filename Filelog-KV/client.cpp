@@ -132,7 +132,7 @@ void writeMetrics(const std::vector<RequestInfo>& requests, const std::string& f
     }
 
     long double averageLatency = totalRequests > 0 ? static_cast<long double>(totalTime) / totalRequests : 0.0;
-    long double throughput = totalRequests > 0 ? static_cast<long double>(totalRequests) / (totalTime * 1000.0) : 0.0;
+    long double throughput = totalRequests > 0 ? static_cast<long double>(totalRequests) / totalTime * 1000.0 : 0.0;
 
     file << "Average Latency: " << averageLatency << " ms" << std::endl;
     file << "Throughput: " << throughput << " requests/second" << std::endl;

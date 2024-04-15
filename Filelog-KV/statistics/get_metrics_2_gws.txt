@@ -1,0 +1,15 @@
+Average Latency: 2.27778 ms
+Throughput: 439.024 requests/second
+P99 Latency: 10 ms
+Average Latency: 1.77778 ms
+Throughput: 562.5 requests/second
+P99 Latency: 5 ms
+Average Latency: 1.68519 ms
+Throughput: 593.407 requests/second
+P99 Latency: 5 ms
+Average Latency: 1.64815 ms
+Throughput: 606.742 requests/second
+P99 Latency: 5 ms
+Average Latency: 1.46296 ms
+Throughput: 683.544 requests/second
+P99 Latency: 4 ms
