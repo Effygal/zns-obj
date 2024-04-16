@@ -6,7 +6,7 @@
 
 ## Overview
 
-`kv-filelog` is a two-layer (gateway server and logger server) distributed KV storage system; build on top of conventional file system, with the underlying file on each logger serves as the log for KV storage; data stored in append manner; we utilizes the current LBA of the file as a weak version ID; providing both client, gateway server, and logger server implementations. It is built using modern C++17, and as such, requires a recent compiler.
+`kv-filelog` FilelogKV is a two-layer (gateways and loggers) distributed KV storage system; built on top of the conventional file system, with the underlying file on each logger serving as the log for KV storage; data is stored in an append manner; we utilize the current LBA of the file as a weak version ID; providing both client, gateway server, and logger server implementations. It is built using modern C++17, and as such, requires a recent compiler.
 
 
 
@@ -82,9 +82,9 @@ ReadReply Logger::ReadThread(cmd& request, off_t lba) {
 }
 
 ```
-Loggers are assumed to never fail, because they emulate ZNSSDs for our purpose; 
-All loggers within the cluster talks to all gateways for append request; the chosen logger talks to the gateway who made the choice for read request; the undelying implementation of append is in terms of pwrite and lseek; the underlying implementation of read is in pread; two services running on two threads.
-Loggers are assumed to never fail (although we implemented failure handle for loggers as well), because they are pretending to be ZNSSDs, thus are persistent.
+
+All loggers within the cluster talk to all gateways for append request; the chosen logger talks to the gateway who made the choice for read request; the underlying implementation of append is in terms of pwrite and lseek; the underlying implementation of read is in pread; two services running on two threads.
+Loggers are assumed to never fail (although we implemented failure handles for loggers as well), because they are pretending to be ZNSSDs that are persistent.
 
 ## Client
 
