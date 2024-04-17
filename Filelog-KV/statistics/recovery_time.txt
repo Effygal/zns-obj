@@ -88,3 +88,12 @@ Recovery Duration: 12 ms
 Recovery Duration: 13 ms
 Recovery Duration: 14 ms
 Recovery Duration: 11 ms
+Batched mode after failure:
+Recovery Duration: 44 ms
+Recovery Duration: 236 ms
+Recovery Duration: 183 ms
+Recovery Duration: 83 ms
+Recovery Duration: 116 ms
+Recovery Duration: 377 ms
+Recovery Duration: 165 ms
+Recovery Duration: 519 ms
